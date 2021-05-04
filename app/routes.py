@@ -3,17 +3,17 @@ from flask_login import login_user, logout_user
 from app import app, user
 from app.forms import LoginForm
 
-from modals import render_template_modal
+from flask_modals import render_template_modal
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
 
-    if 'show' in session:
-        show = session['show']
-        del session['show']
+    if 'check' in session:
+        check = session['check']
+        del session['check']
     else:
-        show = True
+        check = True
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -24,11 +24,11 @@ def index():
         login_user(user, remember=form.remember_me.data)
 
         flash('You have logged in!', 'success')
-        session['show'] = False
+        session['check'] = False
         return redirect(url_for('index'))
 
     return render_template_modal('index.html', form=form,
-                                 modal='modal-form', show=show)
+                                 modal='modal-form', turbo=check)
 
 
 @app.route('/logout')

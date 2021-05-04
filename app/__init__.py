@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, UserMixin
-from modals import Modal
+from flask_modals import Modal
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key'
