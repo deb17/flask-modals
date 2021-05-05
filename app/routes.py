@@ -1,7 +1,7 @@
-from flask import redirect, url_for, flash, session
+from flask import redirect, url_for, flash, session, render_template
 from flask_login import login_user, logout_user
 from app import app, user
-from app.forms import LoginForm
+from app.forms import LoginForm, NewsletterForm
 
 from flask_modals import render_template_modal
 
@@ -24,11 +24,26 @@ def index():
         login_user(user, remember=form.remember_me.data)
 
         flash('You have logged in!', 'success')
-        session['check'] = False
-        return redirect(url_for('index'))
+        # session['check'] = False
+        return redirect(url_for('home'))
 
     return render_template_modal('index.html', form=form,
                                  modal='modal-form', turbo=check)
+
+
+@app.route('/home', methods=['GET', 'POST'])
+def home():
+
+    form = NewsletterForm()
+
+    if form.validate_on_submit():
+        flash('You have subscribed to the newsletter!', 'success')
+        return redirect(url_for('home'))
+
+    # if form.errors:
+        # return render_template('home.html', form=form), 422
+
+    return render_template('home.html', form=form)
 
 
 @app.route('/logout')

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% from 'bootstrap/form.html' import render_form %}
+
+{% block content %}
+<h1>This is the home page.</h1>
+<h4>It has a plain form. No modals. The browser treats it normally.</h4>
+<h2>Subscribe to the newsletter</h2>
+{{ render_form(form, novalidate=True) }}
+{% endblock %}

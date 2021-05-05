@@ -8,3 +8,11 @@ document.documentElement.addEventListener('turbo:render', () => {
     }
   })
 })
+
+document.documentElement.addEventListener('turbo:submit-start', () => {
+  NProgress.start()
+})
+
+document.documentElement.addEventListener('turbo:submit-end', () => {
+  NProgress.done()
+})

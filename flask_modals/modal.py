@@ -16,6 +16,7 @@ def render_template_modal(*args, **kwargs):
 
     modal = kwargs.pop('modal', None)
     check_turbo = kwargs.pop('turbo', True)
+    g._include = True
 
     if check_turbo:
         if turbo.can_stream():
@@ -43,7 +44,7 @@ class Modal:
         turbo.init_app(app)
         self.registed_blueprint(app)
         self.app.add_template_global(modal_messages)
-        self.app.jinja_env.globals['modals'] = self
+        self.app.jinja_env.globals['modals'] = self.load
         self.app.jinja_env.globals['show_flashed_messages'] = \
             self.show_flashed_messages
 
@@ -62,8 +63,11 @@ class Modal:
 
         return get_flashed_messages(*args, **kwargs)
 
-    def load_js(self):
+    def load(self):
 
-        html = Markup(render_template('modals/jstemplate.html'))
+        html = (Markup(render_template('modals/turbo.html') +
+                       render_template('modals/nprogress.html') +
+                       render_template('modals/jstemplate.html') +
+                       render_template('modals/bodyattr.html')))
 
-        return turbo.turbo() + html
+        return html

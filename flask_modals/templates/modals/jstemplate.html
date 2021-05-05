@@ -1,1 +1,3 @@
-<script src="{{ url_for('modals.static', filename='/js/main.js') }}"></script>
+{% if g.get('_include') %}
+<script src="{{ url_for('modals.static', filename='js/main.js') }}"></script>
+{% endif %}
