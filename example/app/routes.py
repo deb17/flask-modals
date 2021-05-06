@@ -1,13 +1,21 @@
 from flask import redirect, url_for, flash, render_template
 from flask_login import login_user, logout_user
+from flask_modals import render_template_modal
+
 from app import app, user
 from app.forms import LoginForm, NewsletterForm
-
-from flask_modals import render_template_modal
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    '''This index route handles the login form as well. The login form
+    is present in a modal.
+
+    `render_template_modal` takes 2 extra arguments - `modal` (the id of
+    modal) and `turbo` (whether modal should be displayed. Set to True
+    by default). Only the `modal` argument is used below. See the
+    commented out code below for usage of `turbo`.
+    '''
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -52,6 +60,7 @@ def index():
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
+    '''This is a normal route without a modal form.'''
 
     form = NewsletterForm()
 

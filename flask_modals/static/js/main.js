@@ -1,3 +1,5 @@
+// The .modal-backdrop div appears mutliple times when the form is 
+// submitted via ajax. We need to keep only one occurrence.
 document.documentElement.addEventListener('turbo:render', () => {
   $('.modal').unbind('shown.bs.modal')
   $('.modal').on('shown.bs.modal', function() {

@@ -3,12 +3,34 @@ import re
 
 
 class ModalParser(HTMLParser):
+    '''The parser gives the modal body an id and filters it out as the
+    turbo stream element. I could have used `beautifulsoup` to do the
+    parsing but chose not to in order to keep the extension lightweight.
+    (All it does is support modals.)
+    '''
+
     def __init__(self, html, modal):
+        '''Initialize the parser and call method to insert ids for
+        modal bodies.
+
+        id_num: A unique integer for each modal body.
+        div_count: Keep track of all divs in the modal body.
+        found_modal: Flag to indicate the modal with id passed to
+                     render_template_modal function was found.
+        found_body: Flag to indicate that the body of the specific
+                    modal was found.
+        html: The render_template output string. Will be modified with
+              id attributes.
+        modal: The id of the modal
+        stream: The modal body element with the id set.
+        target: The id of the stream element.
+        '''
+
         super().__init__()
         self.id_num = 0
         self.div_count = 0
-        self.found_body = False
         self.found_modal = False
+        self.found_body = False
         self.html = html
         self.modal = modal
         self.stream = ''
@@ -55,6 +77,7 @@ class ModalParser(HTMLParser):
                     self.found_modal = False
 
     def get_stream(self):
+        '''Get the modal body element.'''
 
         lines = self.html.splitlines(keepends=True)
         start_line_no = self.stream_start[0] - 1
@@ -70,6 +93,7 @@ class ModalParser(HTMLParser):
 
 
 def add_turbo_stream_ids(html, modal):
+    '''Add turbo stream ids and parse the resulting html string.'''
 
     parser = ModalParser(html, modal)
     parser.feed(parser.html)
