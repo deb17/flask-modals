@@ -1,4 +1,5 @@
-from flask import Blueprint, g, render_template, get_flashed_messages
+from flask import (Blueprint, render_template,
+                   get_flashed_messages, _app_ctx_stack)
 from jinja2 import Markup
 from turbo_flask import Turbo
 
@@ -25,22 +26,23 @@ def render_template_modal(*args, **kwargs):
            True for initial page loads and for modal display.
     '''
 
+    ctx = _app_ctx_stack.top
     modal = kwargs.pop('modal', None)
     check_turbo = kwargs.pop('turbo', True)
-    g._include = True  # used in extension templates
+    ctx._include = True  # used in extension templates
 
     if check_turbo:
         if turbo.can_stream():
             # prevent flash messages from showing both outside and
             # inside the modal
-            g._modal = True
+            ctx._modal = True
 
     html, stream, target = add_turbo_stream_ids(
         render_template(*args, **kwargs),
         modal
     )
 
-    if g.get('_modal'):
+    if getattr(ctx, '_modal', None):
         return turbo.stream(turbo.replace(stream, target=target))
 
     return html
@@ -48,7 +50,9 @@ def render_template_modal(*args, **kwargs):
 
 class Modal:
     def __init__(self, app=None):
-        if app:
+
+        self.app = app
+        if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
@@ -56,12 +60,11 @@ class Modal:
         globals for app.
         '''
 
-        self.app = app
         turbo.init_app(app)
         self.register_blueprint(app)
-        self.app.add_template_global(modal_messages)
-        self.app.jinja_env.globals['modals'] = self.load
-        self.app.jinja_env.globals['show_flashed_messages'] = \
+        app.add_template_global(modal_messages)
+        app.jinja_env.globals['modals'] = self.load
+        app.jinja_env.globals['show_flashed_messages'] = \
             self.show_flashed_messages
 
     def register_blueprint(self, app):
@@ -78,7 +81,8 @@ class Modal:
         displayed and so we do not flash messages in it.
         '''
 
-        if not g.get('_modal'):
+        ctx = _app_ctx_stack.top
+        if not getattr(ctx, '_modal', None):
             return
 
         return get_flashed_messages(*args, **kwargs)
@@ -95,9 +99,11 @@ class Modal:
                            (always loaded)
         '''
 
-        html = (Markup(render_template('modals/turbo.html') +
-                       render_template('modals/nprogress.html') +
-                       render_template('modals/jstemplate.html') +
-                       render_template('modals/bodyattr.html')))
+        ctx = _app_ctx_stack.top
+        inc = getattr(ctx, '_include', None)
+        html = (Markup(render_template('modals/turbo.html', include=inc) +
+                       render_template('modals/nprogress.html', include=inc) +
+                       render_template('modals/jstemplate.html', include=inc) +
+                       render_template('modals/bodyattr.html', include=inc)))
 
         return html

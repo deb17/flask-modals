@@ -121,7 +121,4 @@ def index():
 form.
 
 2. It loads the NProgress js library to display a progress bar during form
-submission. 
-
-3. The `render_template_modal` function sets 2 instance variables `_include`
-and `_modal` on the `g` object for internal use. 
+submission.  

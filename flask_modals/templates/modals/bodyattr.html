@@ -1,6 +1,6 @@
 <script>
   document.documentElement.addEventListener('turbo:load', () => {
-    const turbo = "{{ 'true' if g.get('_include') else 'false' }}"
+    const turbo = "{{ 'true' if include else 'false' }}"
     const body = document.querySelector('body')
     if (turbo === 'false') {
       body.dataset.turbo = turbo
