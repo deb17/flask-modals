@@ -5,8 +5,7 @@ Use forms in Bootstrap 4 modals with Flask.
 ### Description
 
 Plain forms can be boring. Using them in modals is possible, but requires
-JavaScript coding. Normal form submission in modals is not possible in
-Flask.
+JavaScript. Normal form submission in modals has its own problems.
 
 This extension eases the process of using forms in (Bootstrap 4) modals. No
 JavaScript coding is required on your part. The ajax calls are handled behind
@@ -87,7 +86,7 @@ def index():
 ```
 See the example folder in the repo for more details.
 
-6. If you want to redirect to the same page (containing the modal), use Flask's
+6. If you want to redirect to the same page outside the modal, use Flask's
 `session` proxy as follows:
 
 ```Python
@@ -123,3 +122,6 @@ form.
 
 2. It loads the NProgress js library to display a progress bar during form
 submission. 
+
+3. The `render_template_modal` function sets 2 instance variables `_include`
+and `_modal` on the `g` object for internal use. 
