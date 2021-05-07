@@ -7,8 +7,8 @@ Use forms in Bootstrap 4 modals with Flask.
 Plain forms can be boring. Using them in modals is possible, but requires
 JavaScript. Normal form submission in modals has its own problems.
 
-This extension eases the process of using forms in (Bootstrap 4) modals. No
-JavaScript coding is required on your part. The ajax calls are handled behind
+This Flask extension eases the process of using forms in (Bootstrap 4) modals.
+No JavaScript coding is required on your part. The ajax calls are handled behind
 the scenes with html-over-the-wire Turbo library and the Turbo-Flask
 extension. You can code in pure Python - flashing messages and rendering
 templates.

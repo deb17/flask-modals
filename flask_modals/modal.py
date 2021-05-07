@@ -1,3 +1,5 @@
+from functools import partial
+
 from flask import (Blueprint, render_template,
                    get_flashed_messages, _app_ctx_stack)
 from jinja2 import Markup
@@ -101,9 +103,11 @@ class Modal:
 
         ctx = _app_ctx_stack.top
         inc = getattr(ctx, '_include', None)
-        html = (Markup(render_template('modals/turbo.html', include=inc) +
-                       render_template('modals/nprogress.html', include=inc) +
-                       render_template('modals/jstemplate.html', include=inc) +
-                       render_template('modals/bodyattr.html', include=inc)))
+        render = partial(render_template, include=inc)
+
+        html = (Markup(render('modals/turbo.html') +
+                       render('modals/nprogress.html') +
+                       render('modals/jstemplate.html') +
+                       render('modals/bodyattr.html')))
 
         return html

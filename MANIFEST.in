@@ -1,0 +1,3 @@
+prune *.pyc
+recursive-include flask_modals/templates *
+recursive-include flask_modals/static *
