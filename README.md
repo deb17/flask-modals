@@ -30,6 +30,7 @@ pip install Flask-Modals
     modal = Modal(app)
     ```
 
+
 2. Alternatively if you are using the application factory pattern:
 
     ```Python
@@ -42,11 +43,13 @@ pip install Flask-Modals
         modal.init_app(app)
     ```
 
+
 3. Include the following in the head tag of your base template.
 
     ```html
     {{ modals() }}
     ```
+
 
 4. Include the following in the modal body.
 
@@ -57,6 +60,7 @@ pip install Flask-Modals
     ...
     ```
 
+
 5. Import the function `render_template_modal` in your `routes.py` file and use
 it instead of `render_template` in the route handler for the pagewith the modal
 form. It takes the same arguments as `render_template`, apart from `modal` (the
@@ -64,7 +68,7 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
 (`False` if you are not redirecting). See the next examples for use of `turbo` and
 `redirect`.
 
-  Example route handler:
+    Example route handler:
 
     ```Python
     from flask_modals import render_template_modal
@@ -85,7 +89,8 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
 
         return render_template_modal('index.html', form=form, modal='modal-form')
     ```
-  See the example folder in the repo for more details.
+    See the example folder in the repo for more details.
+
 
 6. If you want to redirect to the same page outside the modal, use Flask's
 `session` proxy as follows:
@@ -115,6 +120,7 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
         return render_template_modal('index.html', form=form,
                                     modal='modal-form', turbo=check)
     ```
+
 
 7. If you want to render a template and not redirect, then use the following
 pattern:
