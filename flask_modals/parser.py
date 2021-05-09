@@ -9,7 +9,7 @@ class ModalParser(HTMLParser):
     (All it does is support modals.)
     '''
 
-    def __init__(self, html, modal):
+    def __init__(self, html, modal, redirect, show_modal):
         '''Initialize the parser and call method to insert ids for
         modal bodies.
 
@@ -22,6 +22,10 @@ class ModalParser(HTMLParser):
         html: The render_template output string. Will be modified with
               id attributes.
         modal: The id of the modal
+        redirect: If rendering a template instead of redirecting, this will
+                  be False.
+        body: If True, parse the body out of the html string if redirect is
+              False.
         stream: The modal body element with the id set.
         target: The id of the stream element.
         '''
@@ -33,6 +37,8 @@ class ModalParser(HTMLParser):
         self.found_body = False
         self.html = html
         self.modal = modal
+        self.redirect = redirect
+        self.body = not show_modal
         self.stream = ''
         self.target = ''
         self.insert_id()
@@ -46,7 +52,16 @@ class ModalParser(HTMLParser):
 
         self.html = re.sub(r'class\s*=\s*"modal-body"', repl, self.html)
 
+        if not self.redirect:
+            self.html = self.html.replace('<body',
+                                          '<body id="turbo-stream__body"')
+
     def handle_starttag(self, tag, attrs):
+
+        if self.body and not self.redirect:
+            if tag == 'body':
+                self.stream_start = self.getpos()
+            return
 
         if tag == 'div':
             for attr in attrs:
@@ -67,6 +82,12 @@ class ModalParser(HTMLParser):
 
     def handle_endtag(self, tag):
 
+        if self.body and not self.redirect:
+            if tag == 'body':
+                self.stream_end = self.getpos()
+                self.get_stream(endtaglen=len('</body>'))
+            return
+
         if self.found_body:
             if tag == 'div':
                 self.div_count -= 1
@@ -76,7 +97,7 @@ class ModalParser(HTMLParser):
                     self.found_body = False
                     self.found_modal = False
 
-    def get_stream(self):
+    def get_stream(self, endtaglen=6):
         '''Get the modal body element.'''
 
         lines = self.html.splitlines(keepends=True)
@@ -85,16 +106,16 @@ class ModalParser(HTMLParser):
         start_pos = self.stream_start[1]
         end_line_no = self.stream_end[0] - 1
         end_line = lines[end_line_no]
-        end_pos = self.stream_end[1] + 6    # </div>
+        end_pos = self.stream_end[1] + endtaglen    # </div> or </body>
         self.stream += start_line[start_pos:]
         for line in lines[start_line_no + 1:end_line_no]:
             self.stream += line
         self.stream += end_line[:end_pos]
 
 
-def add_turbo_stream_ids(html, modal):
+def add_turbo_stream_ids(html, modal, redirect, show_modal):
     '''Add turbo stream ids and parse the resulting html string.'''
 
-    parser = ModalParser(html, modal)
+    parser = ModalParser(html, modal, redirect, show_modal)
     parser.feed(parser.html)
     return parser.html, parser.stream, parser.target

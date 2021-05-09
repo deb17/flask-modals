@@ -15,7 +15,7 @@ templates.
 
 ### Installation
 
-```
+```Shell
 pip install Flask-Modals
 ```
 
@@ -23,97 +23,122 @@ pip install Flask-Modals
 
 1. Import the `Modal` class and instantiate in your `app.py` file.
 
-```Python
-from flask_modals import Modal
+    ```Python
+    from flask_modals import Modal
 
-app = Flask(__name__)
-modal = Modal(app)
-```
+    app = Flask(__name__)
+    modal = Modal(app)
+    ```
 
 2. Alternatively if you are using the application factory pattern:
 
-```Python
-from flask_modals import Modal
+    ```Python
+    from flask_modals import Modal
 
-modal = Modal()
+    modal = Modal()
 
-def create_app():
-    app = Flask(__name__)
-    modal.init_app(app)
-```
+    def create_app():
+        app = Flask(__name__)
+        modal.init_app(app)
+    ```
 
 3. Include the following in the head tag of your base template.
 
-```html
-{{ modals() }}
-```
+    ```html
+    {{ modals() }}
+    ```
 
 4. Include the following in the modal body.
 
-```html
-<div class="modal-body">
-  {{ modal_messages() }}
-  <form method="post">
-  ...
-```
+    ```html
+    <div class="modal-body">
+    {{ modal_messages() }}
+    <form method="post">
+    ...
+    ```
 
-5. Import the function `render_template_modal` in your `routes.py` file
-and use it instead of `render_template` in the route handler for the page
-with the modal form. It takes the same arguments as `render_template`, apart
-from `modal` (the modal `id`) and `turbo` (which should be `False` if modal
-is not to be displayed). See next example for use of `turbo`.
+5. Import the function `render_template_modal` in your `routes.py` file and use
+it instead of `render_template` in the route handler for the pagewith the modal
+form. It takes the same arguments as `render_template`, apart from `modal` (the
+modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
+(`False` if you are not redirecting). See the next examples for use of `turbo` and
+`redirect`.
 
-Example route handler:
+  Example route handler:
 
-```Python
-from flask_modals import render_template_modal
+    ```Python
+    from flask_modals import render_template_modal
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+    @app.route('/', methods=['GET', 'POST'])
+    def index():
 
-    form = LoginForm()
-    if form.validate_on_submit():
-        if form.username.data != 'test' or form.password.data != 'pass':
-            flash('Invalid username or password', 'danger')
-            return redirect(url_for('index'))
+        form = LoginForm()
+        if form.validate_on_submit():
+            if form.username.data != 'test' or form.password.data != 'pass':
+                flash('Invalid username or password', 'danger')
+                return redirect(url_for('index'))
 
-        login_user(user, remember=form.remember_me.data)
+            login_user(user, remember=form.remember_me.data)
 
-        flash('You have logged in!', 'success')
-        return redirect(url_for('home'))
+            flash('You have logged in!', 'success')
+            return redirect(url_for('home'))
 
-    return render_template_modal('index.html', form=form, modal='modal-form')
-```
-See the example folder in the repo for more details.
+        return render_template_modal('index.html', form=form, modal='modal-form')
+    ```
+  See the example folder in the repo for more details.
 
 6. If you want to redirect to the same page outside the modal, use Flask's
 `session` proxy as follows:
 
-```Python
-@app.route('/', methods=['GET', 'POST'])
-def index():
+    ```Python
+    @app.route('/', methods=['GET', 'POST'])
+    def index():
 
-    if 'check' in session:
-        check = session['check']
-        del session['check']
-    else:
-        check = True
+        if 'check' in session:
+            check = session['check']
+            del session['check']
+        else:
+            check = True
 
-    form = LoginForm()
-    if form.validate_on_submit():
-        if form.username.data != 'test' or form.password.data != 'pass':
-            flash('Invalid username or password', 'danger')
+        form = LoginForm()
+        if form.validate_on_submit():
+            if form.username.data != 'test' or form.password.data != 'pass':
+                flash('Invalid username or password', 'danger')
+                return redirect(url_for('index'))
+
+            login_user(user, remember=form.remember_me.data)
+
+            flash('You have logged in!', 'success')
+            session['check'] = False
             return redirect(url_for('index'))
 
-        login_user(user, remember=form.remember_me.data)
+        return render_template_modal('index.html', form=form,
+                                    modal='modal-form', turbo=check)
+    ```
 
-        flash('You have logged in!', 'success')
-        session['check'] = False
-        return redirect(url_for('index'))
+7. If you want to render a template and not redirect, then use the following
+pattern:
 
-    return render_template_modal('index.html', form=form,
-                                 modal='modal-form', turbo=check)
-```
+    ```Python
+    @app.route('/', methods=['GET', 'POST'])
+    def index():
+
+        form = LoginForm()
+        if form.validate_on_submit():
+            if form.username.data != 'test' or form.password.data != 'pass':
+                flash('Invalid username or password', 'danger')
+                return render_template_modal('index.html', form=form,
+                                            modal='modal-form', redirect=False)
+
+            login_user(user, remember=form.remember_me.data)
+
+            flash('You have logged in!', 'success')
+            return render_template_modal('index.html', form=form, turbo=False,
+                                        modal='modal-form', redirect=False)
+
+        return render_template_modal('index.html', form=form,
+                                    modal='modal-form', redirect=False)
+    ```
 
 ### Note
 

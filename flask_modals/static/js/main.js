@@ -17,3 +17,9 @@ document.documentElement.addEventListener('turbo:submit-start', () => {
 document.documentElement.addEventListener('turbo:submit-end', () => {
   NProgress.done()
 })
+
+document.documentElement.addEventListener('turbo:before-stream-render', (e) => {
+  if (e.target.attributes.action.value === 'update') {
+    document.querySelector('body').classList.remove('modal-open')
+  }
+})

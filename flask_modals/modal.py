@@ -1,7 +1,7 @@
 from functools import partial
 
-from flask import (Blueprint, render_template,
-                   get_flashed_messages, _app_ctx_stack)
+from flask import (Blueprint, render_template, get_flashed_messages,
+                   _app_ctx_stack)
 from jinja2 import Markup
 from turbo_flask import Turbo
 
@@ -21,31 +21,42 @@ def render_template_modal(*args, **kwargs):
     '''Call this function instead of render_template when the page
     contains a modal form.
 
-    It accepts all the arguments passed to render_template and 2 others:
+    It accepts all the arguments passed to render_template and 3 others:
 
     modal: id of the modal
     turbo: Set this to False if modal is not be displayed. It should be
            True for initial page loads and for modal display.
+    redirect: Set this to False if you want to render templates and not
+              redirect.
     '''
 
     ctx = _app_ctx_stack.top
     modal = kwargs.pop('modal', None)
-    check_turbo = kwargs.pop('turbo', True)
+    replace = kwargs.pop('turbo', True)
+    redirect = kwargs.pop('redirect', True)
     ctx._include = True  # used in extension templates
+    show_modal = False
 
-    if check_turbo:
-        if turbo.can_stream():
+    if turbo.can_stream():
+        if replace:
+            show_modal = True
             # prevent flash messages from showing both outside and
             # inside the modal
             ctx._modal = True
 
     html, stream, target = add_turbo_stream_ids(
         render_template(*args, **kwargs),
-        modal
+        modal,
+        redirect,
+        show_modal
     )
 
-    if getattr(ctx, '_modal', None):
+    if show_modal:
         return turbo.stream(turbo.replace(stream, target=target))
+    else:
+        if not replace and not redirect:
+            return turbo.stream(turbo.update(stream,
+                                             target='turbo-stream__body'))
 
     return html
 
