@@ -20,6 +20,8 @@ document.documentElement.addEventListener('turbo:submit-end', () => {
 
 document.documentElement.addEventListener('turbo:before-stream-render', (e) => {
   if (e.target.attributes.action.value === 'update') {
-    document.querySelector('body').classList.remove('modal-open')
+    const body = document.querySelector('body')
+    body.classList.remove('modal-open')
+    body.style.paddingRight = '0px'
   }
 })

@@ -22,10 +22,7 @@ class ModalParser(HTMLParser):
         html: The render_template output string. Will be modified with
               id attributes.
         modal: The id of the modal
-        redirect: If rendering a template instead of redirecting, this will
-                  be False.
-        body: If True, parse the body out of the html string if redirect is
-              False.
+        body: If True, parse the body out of the html string.
         stream: The modal body element with the id set.
         target: The id of the stream element.
         '''
@@ -37,13 +34,12 @@ class ModalParser(HTMLParser):
         self.found_body = False
         self.html = html
         self.modal = modal
-        self.redirect = redirect
         self.body = not show_modal
         self.stream = ''
         self.target = ''
-        self.insert_id()
+        self.insert_id(redirect)
 
-    def insert_id(self):
+    def insert_id(self, redirect):
 
         def repl(matchobj):
 
@@ -52,13 +48,13 @@ class ModalParser(HTMLParser):
 
         self.html = re.sub(r'class\s*=\s*"modal-body"', repl, self.html)
 
-        if not self.redirect:
+        if not redirect:
             self.html = self.html.replace('<body',
                                           '<body id="turbo-stream__body"')
 
     def handle_starttag(self, tag, attrs):
 
-        if self.body and not self.redirect:
+        if self.body:
             if tag == 'body':
                 self.stream_start = self.getpos()
             return
@@ -82,7 +78,7 @@ class ModalParser(HTMLParser):
 
     def handle_endtag(self, tag):
 
-        if self.body and not self.redirect:
+        if self.body:
             if tag == 'body':
                 self.stream_end = self.getpos()
                 self.get_stream(endtaglen=len('</body>'))
@@ -113,9 +109,10 @@ class ModalParser(HTMLParser):
         self.stream += end_line[:end_pos]
 
 
-def add_turbo_stream_ids(html, modal, redirect, show_modal):
+def add_turbo_stream_ids(html, modal, redirect, update, show_modal):
     '''Add turbo stream ids and parse the resulting html string.'''
 
     parser = ModalParser(html, modal, redirect, show_modal)
-    parser.feed(parser.html)
+    if update or show_modal:  # parse only if streaming
+        parser.feed(parser.html)
     return parser.html, parser.stream, parser.target

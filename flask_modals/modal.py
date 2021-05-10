@@ -31,10 +31,11 @@ def render_template_modal(*args, **kwargs):
     '''
 
     ctx = _app_ctx_stack.top
+    ctx._include = True  # used in extension templates
     modal = kwargs.pop('modal', None)
     replace = kwargs.pop('turbo', True)
+    update = False
     redirect = kwargs.pop('redirect', True)
-    ctx._include = True  # used in extension templates
     show_modal = False
 
     if turbo.can_stream():
@@ -43,20 +44,22 @@ def render_template_modal(*args, **kwargs):
             # prevent flash messages from showing both outside and
             # inside the modal
             ctx._modal = True
+        else:
+            update = False if redirect else True
 
     html, stream, target = add_turbo_stream_ids(
         render_template(*args, **kwargs),
         modal,
         redirect,
+        update,
         show_modal
     )
 
     if show_modal:
         return turbo.stream(turbo.replace(stream, target=target))
-    else:
-        if not replace and not redirect:
-            return turbo.stream(turbo.update(stream,
-                                             target='turbo-stream__body'))
+
+    if update:
+        return turbo.stream(turbo.update(stream, target='turbo-stream__body'))
 
     return html
 
