@@ -1,6 +1,6 @@
-from flask import redirect, url_for, flash, render_template
+from flask import redirect, url_for, flash
 from flask_login import login_user, logout_user
-from flask_modals import render_template_modal
+from flask_modals import render_template_modal, render_template_redirect
 
 from app import app, user
 from app.forms import LoginForm, NewsletterForm
@@ -31,7 +31,8 @@ def index():
         flash('You have logged in!', 'success')
         return redirect(url_for('home'))
 
-    return render_template_modal('index.html', form=form, modal='modal-form')
+    return render_template_modal('index.html', title='Index page', form=form,
+                                 modal='modal-form')
 
 # Use the following code if you want to redirect to the same page that
 # contained the modal.
@@ -39,11 +40,7 @@ def index():
 # @app.route('/', methods=['GET', 'POST'])
 # def index():
 
-#     if 'check' in session:
-#         check = session['check']
-#         del session['check']
-#     else:
-#         check = True
+#     flag = session.pop('flag', True)
 
 #     form = LoginForm()
 #     if form.validate_on_submit():
@@ -54,11 +51,11 @@ def index():
 #         login_user(user, remember=form.remember_me.data)
 
 #         flash('You have logged in!', 'success')
-#         session['check'] = False
+#         session['flag'] = False
 #         return redirect(url_for('index'))
 
-#     return render_template_modal('index.html', form=form,
-#                                  modal='modal-form', turbo=check)
+#     return render_template_modal('index.html', title='Index page', form=form,
+#                                  modal='modal-form', turbo=flag)
 
 # Use the following code if you want to render a template instead of
 # redirecting.
@@ -70,22 +67,28 @@ def index():
 #     if form.validate_on_submit():
 #         if form.username.data != 'test' or form.password.data != 'pass':
 #             flash('Invalid username or password', 'danger')
-#             return render_template_modal('index.html', form=form,
-#                                          modal='modal-form', redirect=False)
+#             return render_template_modal('index.html', title='Index page',
+#                                          form=form, modal='modal-form',
+#                                          redirect=False)
 
 #         login_user(user, remember=form.remember_me.data)
 
 #         flash('You have logged in!', 'success')
-#         return render_template_modal('index.html', form=form, turbo=False,
+#         return render_template_modal('index.html', title='Index page',
+#                                      form=form, turbo=False,
 #                                      modal='modal-form', redirect=False)
 
-#     return render_template_modal('index.html', form=form,
+#     return render_template_modal('index.html', title='Index page', form=form,
 #                                  modal='modal-form', redirect=False)
 
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
-    '''This is a normal route without a modal form.'''
+    '''This is a normal route without a modal form. As it is
+    redirected to from a modal form route, call
+    `render_template_redirect` here with the same arguments as
+    `render_template`.
+    '''
 
     form = NewsletterForm()
 
@@ -93,7 +96,7 @@ def home():
         flash('You have subscribed to the newsletter!', 'success')
         return redirect(url_for('home'))
 
-    return render_template('home.html', form=form)
+    return render_template_redirect('home.html', title='Home page', form=form)
 
 
 @app.route('/logout')

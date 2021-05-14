@@ -1,7 +1,7 @@
 from functools import partial
 
 from flask import (Blueprint, render_template, get_flashed_messages,
-                   _app_ctx_stack)
+                   _app_ctx_stack, session)
 from jinja2 import Markup
 from turbo_flask import Turbo
 
@@ -46,6 +46,13 @@ def render_template_modal(*args, **kwargs):
             ctx._modal = True
         else:
             update = False if redirect else True
+    else:
+        session['_keep_flashes'] = True
+
+    # if we are rendering the same template or redirecting to the same
+    # page outside the modal, we don't need the session variable.
+    if not replace:
+        session.pop('_keep_flashes', None)
 
     html, stream, target = add_turbo_stream_ids(
         render_template(*args, **kwargs),
@@ -62,6 +69,21 @@ def render_template_modal(*args, **kwargs):
         return turbo.stream(turbo.update(stream, target='turbo-stream__body'))
 
     return html
+
+
+def render_template_redirect(*args, **kwargs):
+    '''Reload the page to unload the Turbo library. See template
+    `turbo.html`. Flashes need to be saved so that they are again
+    available on reload.
+    '''
+
+    if '_keep_flashes' in session:
+        del session['_keep_flashes']
+        ctx = _app_ctx_stack.top
+        ctx._include = False
+        session['_flashes'] = get_flashed_messages(with_categories=True)
+
+    return render_template(*args, **kwargs)
 
 
 class Modal:
@@ -110,9 +132,6 @@ class Modal:
         2. nprogress.html - NProgress js library for progress bar
         3. jstemplate.html - Remove extra modal-backdrop divs and
                              control progress bar.
-        4. bodyattr.html - Add attribute to body element to disable
-                           turbo for pages without modal forms.
-                           (always loaded)
         '''
 
         ctx = _app_ctx_stack.top
@@ -121,7 +140,6 @@ class Modal:
 
         html = (Markup(render('modals/turbo.html') +
                        render('modals/nprogress.html') +
-                       render('modals/jstemplate.html') +
-                       render('modals/bodyattr.html')))
+                       render('modals/jstemplate.html')))
 
         return html

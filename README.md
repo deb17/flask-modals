@@ -30,7 +30,6 @@ pip install Flask-Modals
     modal = Modal(app)
     ```
     <br>
-
 2. Alternatively if you are using the application factory pattern:
 
     ```Python
@@ -43,14 +42,12 @@ pip install Flask-Modals
         modal.init_app(app)
     ```
     <br>
-
 3. Include the following in the head tag of your base template.
 
     ```html
     {{ modals() }}
     ```
     <br>
-
 4. Include the following in the modal body.
 
     ```html
@@ -60,13 +57,12 @@ pip install Flask-Modals
     ...
     ```
     <br>
-
 5. Import the function `render_template_modal` in your `routes.py` file and use
 it instead of `render_template` in the route handler for the page with the modal
 form. It takes the same arguments as `render_template`, apart from `modal` (the
-modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
-(`False` if you are not redirecting). See the next examples for use of `turbo` and
-`redirect`.
+modal `id`), and optionally `turbo` (`False` if modal is not to be displayed) and
+`redirect` (`False` if you are not redirecting). See the next examples for use of
+`turbo` and `redirect`.
 
     Example route handler:
 
@@ -80,6 +76,7 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
         if form.validate_on_submit():
             if form.username.data != 'test' or form.password.data != 'pass':
                 flash('Invalid username or password', 'danger')
+                # You can use `render_template_modal` here
                 return redirect(url_for('index'))
 
             login_user(user, remember=form.remember_me.data)
@@ -88,6 +85,19 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
             return redirect(url_for('home'))
 
         return render_template_modal('index.html', form=form, modal='modal-form')
+    ```
+    
+    In the target route, use `render_template_redirect` with the same arguments
+    as `render_template`.
+    
+    ```Python
+    from flask_modals import render_template_redirect
+
+    @app.route('/home')
+    def home():
+        ...
+        ...
+        return render_template_redirect('home.html', ...) 
     ```
     See the example folder in the repo for more details.
     <br>
@@ -99,11 +109,7 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
     @app.route('/', methods=['GET', 'POST'])
     def index():
 
-        if 'check' in session:
-            check = session['check']
-            del session['check']
-        else:
-            check = True
+        flag = session.pop('flag', True)
 
         form = LoginForm()
         if form.validate_on_submit():
@@ -114,14 +120,13 @@ modal `id`), `turbo` (`False` if modal is not to be displayed) and `redirect`
             login_user(user, remember=form.remember_me.data)
 
             flash('You have logged in!', 'success')
-            session['check'] = False
+            session['flag'] = False
             return redirect(url_for('index'))
 
         return render_template_modal('index.html', form=form,
-                                    modal='modal-form', turbo=check)
+                                    modal='modal-form', turbo=flag)
     ```
     <br>
-
 7. If you want to render a template and not redirect, then use the following
 pattern:
 
@@ -148,8 +153,10 @@ pattern:
 
 ### Note
 
-1. The extension loads the Turbo library only in pages that have a modal
+1. `a` tags on the modal page will need a `data-turbo="false"` attribute.
+
+2. The extension loads the Turbo library only in pages that have a modal
 form.
 
-2. It loads the NProgress js library to display a progress bar during form
+3. It loads the NProgress js library to display a progress bar during form
 submission.  
