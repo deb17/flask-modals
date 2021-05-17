@@ -1,4 +1,4 @@
-from flask import redirect, url_for, flash
+from flask import redirect, url_for, flash, session
 from flask_login import login_user, logout_user
 from flask_modals import render_template_modal, render_template_redirect
 

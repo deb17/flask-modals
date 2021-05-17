@@ -44,13 +44,19 @@ class ModalParser(HTMLParser):
         def repl(matchobj):
 
             self.id_num += 1
-            return f'class="modal-body" id="turbo-stream__{self.id_num}"'
+            return (f'class="modal-body" id="turbo-stream__{self.id_num}" ' +
+                    'data-turbo="true"')
 
         self.html = re.sub(r'class\s*=\s*"modal-body"', repl, self.html)
 
         if not redirect:
+            self.html = self.html.replace(
+                '<body',
+                '<body id="turbo-stream__body" data-turbo="false"'
+            )
+        else:
             self.html = self.html.replace('<body',
-                                          '<body id="turbo-stream__body"')
+                                          '<body data-turbo="false"')
 
     def handle_starttag(self, tag, attrs):
 

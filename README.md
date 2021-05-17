@@ -21,7 +21,7 @@ pip install Flask-Modals
 
 ### Usage
 
-1. Import the `Modal` class and instantiate in your `app.py` file.
+1. Import the `Modal` class and instantiate it in your `app.py` file.
 
     ```Python
     from flask_modals import Modal
@@ -153,10 +153,8 @@ pattern:
 
 ### Note
 
-1. `a` tags on the modal page will need a `data-turbo="false"` attribute.
-
-2. The extension loads the Turbo library only in pages that have a modal
+1. The extension loads the Turbo library only in pages that have a modal
 form.
 
-3. It loads the NProgress js library to display a progress bar during form
+2. It loads the NProgress js library to display a progress bar during form
 submission.  

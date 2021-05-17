@@ -1,7 +1,7 @@
 from functools import partial
 
 from flask import (Blueprint, render_template, get_flashed_messages,
-                   _app_ctx_stack, session)
+                   _app_ctx_stack, session, request)
 from jinja2 import Markup
 from turbo_flask import Turbo
 
@@ -32,6 +32,9 @@ def render_template_modal(*args, **kwargs):
 
     ctx = _app_ctx_stack.top
     ctx._include = True  # used in extension templates
+
+    session['_cond_flashes'] = True  # used in after_app_request function
+
     modal = kwargs.pop('modal', None)
     replace = kwargs.pop('turbo', True)
     update = False
@@ -46,13 +49,6 @@ def render_template_modal(*args, **kwargs):
             ctx._modal = True
         else:
             update = False if redirect else True
-    else:
-        session['_keep_flashes'] = True
-
-    # if we are rendering the same template or redirecting to the same
-    # page outside the modal, we don't need the session variable.
-    if not replace:
-        session.pop('_keep_flashes', None)
 
     html, stream, target = add_turbo_stream_ids(
         render_template(*args, **kwargs),
@@ -110,6 +106,22 @@ class Modal:
         bp = Blueprint('modals', __name__, template_folder='templates',
                        static_folder='static',
                        static_url_path='/modals/static')
+
+        @bp.after_app_request
+        def handle_session_vars(response):
+
+            session.pop('_keep_flashes', None)
+
+            if session.get('_cond_flashes'):
+                session['_cond_flashes'] = False
+            elif session.get('_cond_flashes') is False:
+                if request.method == 'POST':
+                    if response.status_code in range(300, 309):
+                        session['_keep_flashes'] = True
+                del session['_cond_flashes']
+
+            return response
+
         app.register_blueprint(bp)
 
     @staticmethod
