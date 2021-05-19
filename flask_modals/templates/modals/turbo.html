@@ -1,5 +1,5 @@
 {% if include %}
-{{ turbo() }}
+{{ turbo(url=url) }}
 {% elif include is false %}
 <meta name="turbo-visit-control" content="reload">
 {% endif %}

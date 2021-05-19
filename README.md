@@ -9,9 +9,8 @@ JavaScript. Normal form submission in modals has its own problems.
 
 This Flask extension eases the process of using forms in (Bootstrap 4) modals.
 No JavaScript coding is required on your part. The ajax calls are handled behind
-the scenes with html-over-the-wire Turbo library and the Turbo-Flask
-extension. You can code in pure Python - flashing messages and rendering
-templates.
+the scenes with html-over-the-wire Turbo library. You can code in pure Python -
+flashing messages and rendering templates.
 
 ### Installation
 
@@ -62,12 +61,13 @@ it instead of `render_template` in the route handler for the page with the modal
 form. It takes the same arguments as `render_template`, apart from `modal` (the
 modal `id`), and optionally `turbo` (`False` if modal is not to be displayed) and
 `redirect` (`False` if you are not redirecting). See the next examples for use of
-`turbo` and `redirect`.
+`turbo` and `redirect`. Use `redirect_to` function if redirecting to a page
+without modal forms.
 
     Example route handler:
 
     ```Python
-    from flask_modals import render_template_modal
+    from flask_modals import render_template_modal, redirect_to
 
     @app.route('/', methods=['GET', 'POST'])
     def index():
@@ -82,7 +82,7 @@ modal `id`), and optionally `turbo` (`False` if modal is not to be displayed) an
             login_user(user, remember=form.remember_me.data)
 
             flash('You have logged in!', 'success')
-            return redirect(url_for('home'))
+            return redirect_to(url_for('home'))
 
         return render_template_modal('index.html', form=form, modal='modal-form')
     ```

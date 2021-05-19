@@ -1,9 +1,9 @@
 from functools import partial
 
 from flask import (Blueprint, render_template, get_flashed_messages,
-                   _app_ctx_stack, session, request)
+                   _app_ctx_stack, session, redirect)
 from jinja2 import Markup
-from turbo_flask import Turbo
+from flask_modals.turbo import Turbo
 
 from flask_modals.parser import add_turbo_stream_ids
 
@@ -32,9 +32,6 @@ def render_template_modal(*args, **kwargs):
 
     ctx = _app_ctx_stack.top
     ctx._include = True  # used in extension templates
-
-    session['_cond_flashes'] = True  # used in after_app_request function
-
     modal = kwargs.pop('modal', None)
     replace = kwargs.pop('turbo', True)
     update = False
@@ -67,6 +64,15 @@ def render_template_modal(*args, **kwargs):
     return html
 
 
+def redirect_to(*args, **kwargs):
+    '''Use this function instead of Flask's `redirect` if you are
+    redirecting to a page without modal forms.
+    '''
+
+    session['_keep_flashes'] = True
+    return redirect(*args, **kwargs)
+
+
 def render_template_redirect(*args, **kwargs):
     '''Reload the page to unload the Turbo library. See template
     `turbo.html`. Flashes need to be saved so that they are again
@@ -94,7 +100,6 @@ class Modal:
         globals for app.
         '''
 
-        turbo.init_app(app)
         self.register_blueprint(app)
         app.add_template_global(modal_messages)
         app.jinja_env.globals['modals'] = self.load
@@ -106,21 +111,6 @@ class Modal:
         bp = Blueprint('modals', __name__, template_folder='templates',
                        static_folder='static',
                        static_url_path='/modals/static')
-
-        @bp.after_app_request
-        def handle_session_vars(response):
-
-            session.pop('_keep_flashes', None)
-
-            if session.get('_cond_flashes'):
-                session['_cond_flashes'] = False
-            elif session.get('_cond_flashes') is False:
-                if request.method == 'POST':
-                    if response.status_code in range(300, 309):
-                        session['_keep_flashes'] = True
-                del session['_cond_flashes']
-
-            return response
 
         app.register_blueprint(bp)
 
@@ -137,7 +127,7 @@ class Modal:
 
         return get_flashed_messages(*args, **kwargs)
 
-    def load(self):
+    def load(self, url=None):
         '''Load the following markup only if page has a modal form:
 
         1. turbo.html - Hotwire Turbo library
@@ -150,7 +140,7 @@ class Modal:
         inc = getattr(ctx, '_include', None)
         render = partial(render_template, include=inc)
 
-        html = (Markup(render('modals/turbo.html') +
+        html = (Markup(render('modals/turbo.html', turbo=turbo.load, url=url) +
                        render('modals/nprogress.html') +
                        render('modals/jstemplate.html')))
 

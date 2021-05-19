@@ -1,6 +1,7 @@
 from flask import redirect, url_for, flash, session
 from flask_login import login_user, logout_user
-from flask_modals import render_template_modal, render_template_redirect
+from flask_modals import (render_template_modal, render_template_redirect,
+                          redirect_to)
 
 from app import app, user
 from app.forms import LoginForm, NewsletterForm
@@ -16,7 +17,8 @@ def index():
     by default) and `redirect` (which should be False if you are not
     redirecting). Only the `modal` argument is required and is used
     below. See the commented out code below for usage of `turbo` and
-    `redirect`.
+    `redirect`. If redirecting to a page without modal forms, use
+    `redirect_to` function.
     '''
 
     form = LoginForm()
@@ -29,7 +31,7 @@ def index():
         login_user(user, remember=form.remember_me.data)
 
         flash('You have logged in!', 'success')
-        return redirect(url_for('home'))
+        return redirect_to(url_for('home'))
 
     return render_template_modal('index.html', title='Index page', form=form,
                                  modal='modal-form')
