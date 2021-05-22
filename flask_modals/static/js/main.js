@@ -25,3 +25,7 @@ document.documentElement.addEventListener('turbo:before-stream-render', (e) => {
     body.style.paddingRight = '0px'
   }
 })
+
+document.documentElement.addEventListener('turbo:load', () => {
+  document.body.dataset.turbo = false
+})

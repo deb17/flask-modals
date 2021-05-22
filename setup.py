@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='Flask-Modals',
-    version='0.2.6',
+    version='0.2.7',
     author='Debashish Palit',
     author_email='dpalit17@outlook.com',
     description='Use forms in Bootstrap 4 modals with Flask.',
@@ -14,9 +14,13 @@ setuptools.setup(
     url='https://github.com/deb17/flask-modals',
     packages=['flask_modals'],
     package_data={'flask_modals': ['templates/modals/*.html',
-                                   'static/js/main.js']},
+                                   'static/js/main.js',
+                                   'static/css/progressBarStyle.css']},
     include_package_data=True,
-    install_requires=['Flask'],
+    install_requires=[
+        'Flask',
+        'beautifulsoup4'
+    ],
     zip_safe=False,
     classifiers=[
         'Programming Language :: Python :: 3',

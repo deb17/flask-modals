@@ -1,14 +1,3 @@
-{% if include %}
 <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css">
-<style>
-    #nprogress .bar {
-        background: #7bc1ea;
-        z-index: 9999;
-        height: 5px;
-    }
-    #nprogress .peg {
-        box-shadow: 0 0 10px #7bc1ea, 0 0 5px #7bc1ea;
-    }
-</style>
-{% endif %}
+<link rel="stylesheet" href="{{ url_for('modals.static', filename='css/progressBarStyle.css') }}">

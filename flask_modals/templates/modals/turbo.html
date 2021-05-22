@@ -1,5 +1,4 @@
-{% if include %}
 {{ turbo(url=url) }}
-{% elif include is false %}
+{% if reload %}
 <meta name="turbo-visit-control" content="reload">
 {% endif %}

@@ -1,124 +1,60 @@
-from html.parser import HTMLParser
-import re
+'''I decided to switch to beautiful soup in version 0.2.7 from the
+built-in parser as it takes a lot less code to accomplish the same.
+Finding nested tags is easy.
+'''
+
+from bs4 import BeautifulSoup
 
 
-class ModalParser(HTMLParser):
-    '''The parser gives the modal body an id and filters it out as the
-    turbo stream element. I could have used `beautifulsoup` to do the
-    parsing but chose not to in order to keep the extension lightweight.
-    (All it does is support modals.)
+def parse_html(html, modal, redirect, update, show_modal):
+    '''Parse the rendered template.
+
+    Add ids to the modal bodies. If modal body contains a form, set
+    `data-turbo="true"` attribute on the form.
+
+    If rendering a template by setting the `redirect` argument to
+    `False`, set an id on the body element for the update operation.
+    Turbo requires a redirect on form submission, so we cannot normally
+    render a template (unless streaming). To overcome this and refresh
+    the page, we stream an update operation on the body element.
+
+    If streaming, return the html fragment (either the modal body or the
+    body element itself).
     '''
+    soup = BeautifulSoup(html, 'html.parser')
 
-    def __init__(self, html, modal, redirect, show_modal):
-        '''Initialize the parser and call method to insert ids for
-        modal bodies.
+    modal_bodies = soup.find_all('div', class_='modal-body')
 
-        id_num: A unique integer for each modal body.
-        div_count: Keep track of all divs in the modal body.
-        found_modal: Flag to indicate the modal with id passed to
-                     render_template_modal function was found.
-        found_body: Flag to indicate that the body of the specific
-                    modal was found.
-        html: The render_template output string. Will be modified with
-              id attributes.
-        modal: The id of the modal
-        body: If True, parse the body out of the html string.
-        stream: The modal body element with the id set.
-        target: The id of the stream element.
-        '''
+    for index, body in enumerate(modal_bodies, 1):
+        body['id'] = f'turbo-stream__{index}'
+        form = body.find('form')
+        if form:
+            form['data-turbo'] = 'true'
 
-        super().__init__()
-        self.id_num = 0
-        self.div_count = 0
-        self.found_modal = False
-        self.found_body = False
-        self.html = html
-        self.modal = modal
-        self.body = not show_modal
-        self.stream = ''
-        self.target = ''
-        self.insert_id(redirect)
+    if not redirect:
+        soup.body['id'] = 'turbo-stream__body'
 
-    def insert_id(self, redirect):
+    stream = ''
+    target = ''
+    output = ''
 
-        def repl(matchobj):
-
-            self.id_num += 1
-            return (f'class="modal-body" id="turbo-stream__{self.id_num}" ' +
-                    'data-turbo="true"')
-
-        self.html = re.sub(r'class\s*=\s*"modal-body"', repl, self.html)
-
-        if not redirect:
-            self.html = self.html.replace(
-                '<body',
-                '<body id="turbo-stream__body" data-turbo="false"'
-            )
+    if update or show_modal:
+        if update:
+            stream = soup.body.decode(formatter='html')
+            target = soup.body['id']
         else:
-            self.html = self.html.replace('<body',
-                                          '<body data-turbo="false"')
+            target_modal = soup.find('div', id=modal)
+            modal_body = target_modal.find('div', class_='modal-body')
+            stream = modal_body.decode(formatter='html')
+            target = modal_body['id']
+    else:
+        # Turbo merges the changes to the head. If asset html is not
+        # identical, it gets repeated. So instead of decoding the
+        # entire document, we decode the body and add the head part
+        # from the html string.
+        body = soup.body.decode(formatter='html')
+        pos = html.index('</head>') + 7
+        head = html[:pos]
+        output = head + body
 
-    def handle_starttag(self, tag, attrs):
-
-        if self.body:
-            if tag == 'body':
-                self.stream_start = self.getpos()
-            return
-
-        if tag == 'div':
-            for attr in attrs:
-                if attr[0] == 'id' and attr[1] == self.modal:
-                    self.found_modal = True
-            if self.found_body:
-                self.div_count += 1
-            else:
-                for attr in attrs:
-                    if attr[0] == 'class' and attr[1] == 'modal-body':
-                        if self.found_modal:
-                            self.found_body = True
-                            self.div_count += 1
-                            self.stream_start = self.getpos()
-                            for a in attrs:
-                                if a[0] == 'id':
-                                    self.target = a[1]
-
-    def handle_endtag(self, tag):
-
-        if self.body:
-            if tag == 'body':
-                self.stream_end = self.getpos()
-                self.get_stream(endtaglen=len('</body>'))
-            return
-
-        if self.found_body:
-            if tag == 'div':
-                self.div_count -= 1
-                if self.div_count == 0:
-                    self.stream_end = self.getpos()
-                    self.get_stream()
-                    self.found_body = False
-                    self.found_modal = False
-
-    def get_stream(self, endtaglen=6):
-        '''Get the modal body element.'''
-
-        lines = self.html.splitlines(keepends=True)
-        start_line_no = self.stream_start[0] - 1
-        start_line = lines[start_line_no]
-        start_pos = self.stream_start[1]
-        end_line_no = self.stream_end[0] - 1
-        end_line = lines[end_line_no]
-        end_pos = self.stream_end[1] + endtaglen    # </div> or </body>
-        self.stream += start_line[start_pos:]
-        for line in lines[start_line_no + 1:end_line_no]:
-            self.stream += line
-        self.stream += end_line[:end_pos]
-
-
-def add_turbo_stream_ids(html, modal, redirect, update, show_modal):
-    '''Add turbo stream ids and parse the resulting html string.'''
-
-    parser = ModalParser(html, modal, redirect, show_modal)
-    if update or show_modal:  # parse only if streaming
-        parser.feed(parser.html)
-    return parser.html, parser.stream, parser.target
+    return output, stream, target

@@ -1,7 +1,7 @@
-from flask import redirect, url_for, flash, session
+from flask import redirect, url_for, flash, session, render_template
 from flask_login import login_user, logout_user
 from flask_modals import (render_template_modal, render_template_redirect,
-                          redirect_to)
+                          redirect_to, response)
 
 from app import app, user
 from app.forms import LoginForm, NewsletterForm
@@ -17,8 +17,7 @@ def index():
     by default) and `redirect` (which should be False if you are not
     redirecting). Only the `modal` argument is required and is used
     below. See the commented out code below for usage of `turbo` and
-    `redirect`. If redirecting to a page without modal forms, use
-    `redirect_to` function.
+    `redirect`.
     '''
 
     form = LoginForm()
@@ -31,10 +30,32 @@ def index():
         login_user(user, remember=form.remember_me.data)
 
         flash('You have logged in!', 'success')
-        return redirect_to(url_for('home'))
+        return redirect(url_for('home'))
 
     return render_template_modal('index.html', title='Index page', form=form,
                                  modal='modal-form')
+
+# @app.route('/', methods=['GET', 'POST'])
+# def index():
+#     '''Use `redirect_to` function if you want a full page reload. Pair
+#     it with `render_template_redirect` function if the target route
+#     has no modal forms.
+#     '''
+
+#     form = LoginForm()
+#     if form.validate_on_submit():
+#         if form.username.data != 'test' or form.password.data != 'pass':
+#             flash('Invalid username or password', 'danger')
+#             # You can use `render_template_modal` here
+#             return redirect(url_for('index'))
+
+#         login_user(user, remember=form.remember_me.data)
+
+#         flash('You have logged in!', 'success')
+#         return redirect_to(url_for('home'))
+
+#     return render_template_modal('index.html', title='Index page', form=form,
+#                                  modal='modal-form')
 
 # Use the following code if you want to redirect to the same page that
 # contained the modal.
@@ -83,14 +104,33 @@ def index():
 #     return render_template_modal('index.html', title='Index page', form=form,
 #                                  modal='modal-form', redirect=False)
 
+# Use the following code if you want to render a template instead of
+# redirecting and make the code less verbose.
+#
+# @app.route('/', methods=['GET', 'POST'])
+# @response('index.html')
+# def index():
+
+#     form = LoginForm()
+#     if form.validate_on_submit():
+#         if form.username.data != 'test' or form.password.data != 'pass':
+#             flash('Invalid username or password', 'danger')
+#             return {'title': 'Index page', 'form': form,
+#                     'modal': 'modal-form', 'redirect': False}
+
+#         login_user(user, remember=form.remember_me.data)
+
+#         flash('You have logged in!', 'success')
+#         return {'title': 'Index page', 'form': form, 'turbo': False,
+#                 'modal': 'modal-form', 'redirect': False}
+
+#     return {'title': 'Index page', 'form': form, 'modal': 'modal-form',
+#             'redirect': False}
+
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
-    '''This is a normal route without a modal form. As it is
-    redirected to from a modal form route, call
-    `render_template_redirect` here with the same arguments as
-    `render_template`.
-    '''
+    '''This is a normal route without a modal form.'''
 
     form = NewsletterForm()
 
@@ -98,7 +138,21 @@ def home():
         flash('You have subscribed to the newsletter!', 'success')
         return redirect(url_for('home'))
 
-    return render_template_redirect('home.html', title='Home page', form=form)
+    return render_template('home.html', title='Home page', form=form)
+
+# @app.route('/home', methods=['GET', 'POST'])
+# def home():
+#     '''To do a full page reload, call `render_template_redirect`
+#     here with the same arguments as `render_template`.
+#     '''
+
+#     form = NewsletterForm()
+
+#     if form.validate_on_submit():
+#         flash('You have subscribed to the newsletter!', 'success')
+#         return redirect(url_for('home'))
+
+#     return render_template_redirect('home.html', title='Home page', form=form)
 
 
 @app.route('/logout')

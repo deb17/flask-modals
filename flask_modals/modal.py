@@ -1,11 +1,11 @@
-from functools import partial
+from functools import wraps
 
 from flask import (Blueprint, render_template, get_flashed_messages,
-                   _app_ctx_stack, session, redirect)
+                   _app_ctx_stack, session, redirect, request)
 from jinja2 import Markup
 from flask_modals.turbo import Turbo
 
-from flask_modals.parser import add_turbo_stream_ids
+from flask_modals.parser import parse_html
 
 turbo = Turbo()
 
@@ -14,7 +14,7 @@ def modal_messages():
     '''This will be available in the app templates for use in the modal
     body.
     '''
-    return Markup(render_template('modals/modal_messages.html'))
+    return Markup(render_template('modals/modalMessages.html'))
 
 
 def render_template_modal(*args, **kwargs):
@@ -31,7 +31,6 @@ def render_template_modal(*args, **kwargs):
     '''
 
     ctx = _app_ctx_stack.top
-    ctx._include = True  # used in extension templates
     modal = kwargs.pop('modal', None)
     replace = kwargs.pop('turbo', True)
     update = False
@@ -47,7 +46,9 @@ def render_template_modal(*args, **kwargs):
         else:
             update = False if redirect else True
 
-    html, stream, target = add_turbo_stream_ids(
+    setup_for_reload()
+
+    html, stream, target = parse_html(
         render_template(*args, **kwargs),
         modal,
         redirect,
@@ -79,13 +80,34 @@ def render_template_redirect(*args, **kwargs):
     available on reload.
     '''
 
+    setup_for_reload()
+    return render_template(*args, **kwargs)
+
+
+def setup_for_reload():
+
     if '_keep_flashes' in session:
         del session['_keep_flashes']
         ctx = _app_ctx_stack.top
-        ctx._include = False
+        ctx._reload = True
         session['_flashes'] = get_flashed_messages(with_categories=True)
 
-    return render_template(*args, **kwargs)
+
+def response(template=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            template_name = template
+            if template_name is None:
+                template_name = f"{request.endpoint.replace('.', '/')}.html"
+            ctx = f(*args, **kwargs)
+            if ctx is None:
+                ctx = {}
+            elif not isinstance(ctx, dict):
+                return ctx
+            return render_template_modal(template_name, **ctx)
+        return decorated_function
+    return decorator
 
 
 class Modal:
@@ -128,20 +150,27 @@ class Modal:
         return get_flashed_messages(*args, **kwargs)
 
     def load(self, url=None):
-        '''Load the following markup only if page has a modal form:
+        '''Load the following markup:
 
         1. turbo.html - Hotwire Turbo library
         2. nprogress.html - NProgress js library for progress bar
-        3. jstemplate.html - Remove extra modal-backdrop divs and
-                             control progress bar.
+        3. jstemplate.html - Remove extra modal-backdrop divs, control
+                             progress bar, add body attribute
+                             `data-turbo="false"`.
         '''
 
         ctx = _app_ctx_stack.top
-        inc = getattr(ctx, '_include', None)
-        render = partial(render_template, include=inc)
+        reload = getattr(ctx, '_reload', None)
 
-        html = (Markup(render('modals/turbo.html', turbo=turbo.load, url=url) +
-                       render('modals/nprogress.html') +
-                       render('modals/jstemplate.html')))
+        turbo_html = render_template(
+            'modals/turbo.html',
+            turbo=turbo.load,
+            url=url,
+            reload=reload
+        )
+        nprogress_html = render_template('modals/nprogress.html')
+        main_html = render_template('modals/jstemplate.html')
+
+        html = Markup(turbo_html + nprogress_html + main_html)
 
         return html
