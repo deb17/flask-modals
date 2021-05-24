@@ -9,8 +9,8 @@ JavaScript. Normal form submission in modals has its own problems.
 
 This Flask extension eases the process of using forms in (Bootstrap 4) modals.
 No JavaScript coding is required on your part. The ajax calls are handled behind
-the scenes with html-over-the-wire Turbo library. You can code in pure Python -
-flashing messages and rendering templates.
+the scenes with html-over-the-wire [Turbo](https://turbo.hotwire.dev/) library.
+You can code in pure Python - flashing messages and rendering templates.
 
 ### Installation
 
@@ -158,7 +158,7 @@ arguments as Flask's `redirect` and `render_template` functions respectively.
 
 ### Note
 
-1. See the example folder for more details.
+1. See the example folder in the repo for more details.
 
 2. The extension loads the NProgress js library to display a progress bar during
 form submission.  

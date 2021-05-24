@@ -3,11 +3,9 @@ from functools import wraps
 from flask import (Blueprint, render_template, get_flashed_messages,
                    _app_ctx_stack, session, redirect, request)
 from jinja2 import Markup
-from flask_modals.turbo import Turbo
+from flask_modals import turbo
 
 from flask_modals.parser import parse_html
-
-turbo = Turbo()
 
 
 def modal_messages():
@@ -66,8 +64,9 @@ def render_template_modal(*args, **kwargs):
 
 
 def redirect_to(*args, **kwargs):
-    '''Use this function instead of Flask's `redirect` if you are
-    redirecting to a page without modal forms.
+    '''Use this function instead of Flask's `redirect` if you want to do
+    a full reload of the page on form submit. Turbo Drive normally does
+    an ajax load of the page.
     '''
 
     session['_keep_flashes'] = True
@@ -75,9 +74,8 @@ def redirect_to(*args, **kwargs):
 
 
 def render_template_redirect(*args, **kwargs):
-    '''Reload the page to unload the Turbo library. See template
-    `turbo.html`. Flashes need to be saved so that they are again
-    available on reload.
+    '''Reload the page if session variable is set, i.e. the route is the
+    target of the `redirect_to` function.
     '''
 
     setup_for_reload()
@@ -85,6 +83,10 @@ def render_template_redirect(*args, **kwargs):
 
 
 def setup_for_reload():
+    '''Setup for reload conditionally. App context variable `_reload`
+    causes the reload to happen - see template `turbo.html`. Flashes
+    need to be saved so that they are again available on reload.
+    '''
 
     if '_keep_flashes' in session:
         del session['_keep_flashes']
@@ -94,6 +96,9 @@ def setup_for_reload():
 
 
 def response(template=None):
+    '''Use this decorator if coding `render_template_modal` in a number
+    of places in a view function looks verbose.
+    '''
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -118,8 +123,9 @@ class Modal:
             self.init_app(app)
 
     def init_app(self, app):
-        '''Initialize the Turbo-Flask extension and register template
-        globals for app.
+        '''Initialize the extension.
+
+        Call method for blueprint and register template globals for app.
         '''
 
         self.register_blueprint(app)
@@ -139,7 +145,7 @@ class Modal:
     @staticmethod
     def show_flashed_messages(*args, **kwargs):
         '''Delegate to get_flashed_messages if _modal is set on the
-        Flask g object. If it is not set, it means modal is not being
+        app context. If it is not set, it means modal is not being
         displayed and so we do not flash messages in it.
         '''
 
