@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from '_macro.html' import input %}
+
+{% block contents %}
+<div class="bg-secondary p-5 rounded-3">
+  <div class="container-fluid text-white py-5">
+    <a href="/" class="btn btn-light mb-4">Back</a>
+    <h1 class="display-5">Auth forms</h1>
+    <p class="fs-4">
+      This page features 2 modal forms - one for login and the other for
+      registering new users. To login, use username `test` and password
+      `pass`.
+    </p>
+    <button type="button" class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#login-modal">Login</button> |
+    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#register-modal">Register</button>
+    <div class="text-body">
+      {% include 'forms/register.html' %}
+      {% include 'forms/login.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const registerModal = new bootstrap.Modal(document.getElementById('register-modal'))
+const loginModal = new bootstrap.Modal(document.getElementById('login-modal'))
+const signinLink = document.getElementById('signin')
+const signupLink = document.getElementById('signup')
+signinLink.addEventListener('click', () => {
+  registerModal.hide()
+  loginModal.show()
+})
+signupLink.addEventListener('click', () => {
+  loginModal.hide()
+  registerModal.show()
+})
+</script>
+{% endblock %}

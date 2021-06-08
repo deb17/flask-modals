@@ -5,10 +5,10 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='Flask-Modals',
-    version='0.2.8',
+    version='0.3.0',
     author='Debashish Palit',
     author_email='dpalit17@outlook.com',
-    description='Use forms in Bootstrap 4 modals with Flask.',
+    description='Use forms in Bootstrap modals with Flask.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/deb17/flask-modals',

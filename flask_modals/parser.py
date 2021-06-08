@@ -55,6 +55,6 @@ def parse_html(html, modal, redirect, update, show_modal):
         body = soup.body.decode(formatter='html')
         pos = html.index('</head>') + 7
         head = html[:pos]
-        output = head + body
+        output = head + body + '</html>'
 
     return output, stream, target

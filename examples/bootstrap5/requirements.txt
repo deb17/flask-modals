@@ -1,0 +1,4 @@
+Flask
+Flask-Modals
+Flask-WTF==0.14.3
+email-validator==1.1.2

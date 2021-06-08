@@ -35,12 +35,20 @@ def render_template_modal(*args, **kwargs):
     redirect = kwargs.pop('redirect', True)
     show_modal = False
 
+    if not redirect:
+        if request.method == 'POST':
+            modal_flag = True
+        else:
+            modal_flag = False
+    else:
+        modal_flag = True
+
     if turbo.can_stream():
         if replace:
-            show_modal = True
+            show_modal = modal_flag
             # prevent flash messages from showing both outside and
             # inside the modal
-            ctx._modal = True
+            ctx._modal = modal_flag
         else:
             update = False if redirect else True
 

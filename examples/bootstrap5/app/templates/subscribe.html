@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block contents %}
+<a href="/" class="btn btn-secondary">Back</a>
+<a href="/logout" class="btn btn-secondary">Logout</a>
+<h1>Subscribe to the newsletter</h1>
+<p class="fs-4">The form on this page does not use `flask-wtf` - to show that this
+  extension is not necessary.
+</p>
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-form">
+  Subscribe
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="modal-form" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Subscribe</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {{ modal_messages() }}
+        <form method="POST" novalidate>
+          <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ name }}">
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ email }}">
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

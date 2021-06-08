@@ -1,0 +1,23 @@
+<div class="modal fade" id="register-modal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="registerModalLabel">Register</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {{ modal_messages() }}
+        <form method="POST" novalidate>
+          {{ form1.csrf_token(id='csrf_token-1') }}
+          {{ input(form1.username) }}
+          {{ input(form1.email) }}
+          {{ input(form1.password) }}
+          {{ input(form1.password2) }}
+          {{ form1.submit1(class_='btn btn-primary') }}
+        </form>
+        <br>
+        <p>Already registered? <a href="#" id="signin">Log in</a></p>
+      </div>
+    </div>
+  </div>
+</div>

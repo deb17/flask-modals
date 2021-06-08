@@ -1,16 +1,17 @@
 ## Modals for Flask
 
-Use forms in Bootstrap 4 modals with Flask.
+Use forms in Bootstrap modals with Flask.
 
 ### Description
 
 Plain forms can be boring. Using them in modals is possible, but requires
 JavaScript. Normal form submission in modals has its own problems.
 
-This Flask extension eases the process of using forms in (Bootstrap 4) modals.
-No JavaScript coding is required on your part. The ajax calls are handled behind
-the scenes with html-over-the-wire [Turbo](https://turbo.hotwire.dev/) library.
-You can code in pure Python - flashing messages and rendering templates.
+This Flask extension eases the process of using forms in Bootstrap modals.
+Bootstrap versions 4 and 5 are supported. No JavaScript coding is required on 
+your part. The ajax calls are handled behind the scenes with html-over-the-wire
+[Turbo](https://turbo.hotwire.dev/) library. You can code in pure Python -
+flashing messages and rendering templates.
 
 ### Installation
 
@@ -28,6 +29,7 @@ pip install Flask-Modals
     app = Flask(__name__)
     modal = Modal(app)
     ```
+    You will also need a secret key in the app config (not shown).
     <br>
 2. Alternatively if you are using the application factory pattern:
 
@@ -158,7 +160,7 @@ arguments as Flask's `redirect` and `render_template` functions respectively.
 
 ### Note
 
-1. See the example folder in the repo for more details.
+1. See the examples folder in the repo for more details.
 
 2. The extension loads the NProgress js library to display a progress bar during
 form submission.  
