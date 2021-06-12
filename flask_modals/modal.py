@@ -4,7 +4,6 @@ from flask import (Blueprint, render_template, get_flashed_messages,
                    _app_ctx_stack, session, redirect, request)
 from jinja2 import Markup
 from flask_modals import turbo
-
 from flask_modals.parser import parse_html
 
 
@@ -35,6 +34,8 @@ def render_template_modal(*args, **kwargs):
     redirect = kwargs.pop('redirect', True)
     show_modal = False
 
+    # When redirecting from another modal route with `turbo` set to True
+    # and `redirect` set to False, don't stream a response.
     if not redirect:
         if request.method == 'POST':
             modal_flag = True

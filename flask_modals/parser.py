@@ -40,7 +40,7 @@ def parse_html(html, modal, redirect, update, show_modal):
 
     if update or show_modal:
         if update:
-            stream = soup.body.decode(formatter='html')
+            stream = soup.body.decode_contents(formatter='html')
             target = soup.body['id']
         else:
             target_modal = soup.find('div', id=modal)
