@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='Flask-Modals',
-    version='0.3.1',
+    version='0.3.2',
     author='Debashish Palit',
     author_email='dpalit17@outlook.com',
     description='Use forms in Bootstrap modals with Flask.',

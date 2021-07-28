@@ -23,6 +23,8 @@ def can_stream():
     '''Returns `True` if the client accepts turbo streams.'''
 
     stream_mimetype = 'text/vnd.turbo-stream.html'
+    if stream_mimetype not in request.accept_mimetypes.values():
+        return False
     best = request.accept_mimetypes.best_match([
         stream_mimetype, 'text/html'])
     return best == stream_mimetype
