@@ -1,10 +1,9 @@
 from functools import wraps
 
 from flask import (Blueprint, render_template, get_flashed_messages,
-                   _app_ctx_stack, session, redirect, request)
+                   _app_ctx_stack, request)
 from jinja2 import Markup
-from flask_modals import turbo
-from flask_modals.parser import parse_html
+from flask_modals.parser import ModalParser
 
 
 def modal_messages():
@@ -18,90 +17,34 @@ def render_template_modal(*args, **kwargs):
     '''Call this function instead of render_template when the page
     contains a modal form.
 
-    It accepts all the arguments passed to render_template and 3 others:
-
-    modal: id of the modal
-    turbo: Set this to False if modal is not be displayed. It should be
-           True for initial page loads and for modal display.
-    redirect: Set this to False if you want to render templates and not
-              redirect.
+    It accepts all the arguments passed to `render_template` apart
+    from `modal` which is the `id` of the modal.
     '''
 
     ctx = _app_ctx_stack.top
     modal = kwargs.pop('modal', None)
-    replace = kwargs.pop('turbo', True)
-    update = False
-    redirect = kwargs.pop('redirect', True)
-    show_modal = False
 
-    # When redirecting from another modal route with `turbo` set to True
-    # and `redirect` set to False, don't stream a response.
-    if not redirect:
-        if request.method == 'POST':
-            modal_flag = True
-        else:
-            modal_flag = False
+    if can_stream() and modal:
+        # prevent flash messages from showing both outside and
+        # inside the modal
+        ctx._modal = True
+        html = render_template(*args, **kwargs)
+        parser = ModalParser(html, modal)
+        parser.feed(html)
+        return f'<template>{parser.stream}</template>'
     else:
-        modal_flag = True
-
-    if turbo.can_stream():
-        if replace:
-            show_modal = modal_flag
-            # prevent flash messages from showing both outside and
-            # inside the modal
-            ctx._modal = modal_flag
-        else:
-            update = False if redirect else True
-
-    setup_for_reload()
-
-    html, stream, target = parse_html(
-        render_template(*args, **kwargs),
-        modal,
-        redirect,
-        update,
-        show_modal
-    )
-
-    if show_modal:
-        return turbo.stream(turbo.replace(stream, target=target))
-
-    if update:
-        return turbo.stream(turbo.update(stream, target='turbo-stream__body'))
-
-    return html
+        return render_template(*args, **kwargs)
 
 
-def redirect_to(*args, **kwargs):
-    '''Use this function instead of Flask's `redirect` if you want to do
-    a full reload of the page on form submit. Turbo Drive normally does
-    an ajax load of the page.
-    '''
+def can_stream():
+    '''Returns `True` if the client accepts streams.'''
 
-    session['_keep_flashes'] = True
-    return redirect(*args, **kwargs)
-
-
-def render_template_redirect(*args, **kwargs):
-    '''Reload the page if session variable is set, i.e. the route is the
-    target of the `redirect_to` function.
-    '''
-
-    setup_for_reload()
-    return render_template(*args, **kwargs)
-
-
-def setup_for_reload():
-    '''Setup for reload conditionally. App context variable `_reload`
-    causes the reload to happen - see template `turbo.html`. Flashes
-    need to be saved so that they are again available on reload.
-    '''
-
-    if '_keep_flashes' in session:
-        del session['_keep_flashes']
-        ctx = _app_ctx_stack.top
-        ctx._reload = True
-        session['_flashes'] = get_flashed_messages(with_categories=True)
+    stream_mimetype = 'text/modal-stream.html'
+    if stream_mimetype not in request.accept_mimetypes.values():
+        return False
+    best = request.accept_mimetypes.best_match([
+        stream_mimetype, 'text/html'])
+    return best == stream_mimetype
 
 
 def response(template=None):
@@ -167,25 +110,13 @@ class Modal:
     def load(self, url=None):
         '''Load the following markup:
 
-        1. turbo.html - Hotwire Turbo library
-        2. nprogress.html - NProgress js library for progress bar
-        3. jstemplate.html - Remove extra modal-backdrop divs, control
-                             progress bar, add body attribute
-                             `data-turbo="false"`.
+        1. nprogress.html - NProgress js library for progress bar
+        2. jstemplate.html - Load js for fetch call
         '''
 
-        ctx = _app_ctx_stack.top
-        reload = getattr(ctx, '_reload', None)
-
-        turbo_html = render_template(
-            'modals/turbo.html',
-            turbo=turbo.load,
-            url=url,
-            reload=reload
-        )
         nprogress_html = render_template('modals/nprogress.html')
         main_html = render_template('modals/jstemplate.html')
 
-        html = Markup(turbo_html + nprogress_html + main_html)
+        html = Markup(nprogress_html + main_html)
 
         return html

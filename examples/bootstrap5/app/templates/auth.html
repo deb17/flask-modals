@@ -11,8 +11,10 @@
       registering new users. To login, use username `test` and password
       `pass`.
     </p>
-    <button type="button" class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#login-modal">Login</button> |
-    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#register-modal">Register</button>
+    <button type="button" class="btn btn-warning btn-lg" data-bs-toggle="modal"
+      data-bs-target="#login-modal">Login</button> |
+    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal"
+      data-bs-target="#register-modal">Register</button>
     <div class="text-body">
       {% include 'forms/register.html' %}
       {% include 'forms/login.html' %}
@@ -23,17 +25,19 @@
 
 {% block scripts %}
 <script>
-const registerModal = new bootstrap.Modal(document.getElementById('register-modal'))
-const loginModal = new bootstrap.Modal(document.getElementById('login-modal'))
-const signinLink = document.getElementById('signin')
-const signupLink = document.getElementById('signup')
-signinLink.addEventListener('click', () => {
-  registerModal.hide()
-  loginModal.show()
-})
-signupLink.addEventListener('click', () => {
-  loginModal.hide()
-  registerModal.show()
-})
+  (function () {
+    const registerModal = new bootstrap.Modal(document.getElementById('register-modal'))
+    const loginModal = new bootstrap.Modal(document.getElementById('login-modal'))
+    const signinLink = document.getElementById('signin')
+    const signupLink = document.getElementById('signup')
+    signinLink.addEventListener('click', () => {
+      registerModal.hide()
+      loginModal.show()
+    })
+    signupLink.addEventListener('click', () => {
+      loginModal.hide()
+      registerModal.show()
+    })
+  })()
 </script>
 {% endblock %}

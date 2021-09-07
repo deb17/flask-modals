@@ -1,60 +1,64 @@
-'''I decided to switch to beautiful soup in version 0.2.7 from the
-built-in parser as it takes a lot less code to accomplish the same.
-Finding nested tags is easy.
-'''
-
-from bs4 import BeautifulSoup
+from html.parser import HTMLParser
 
 
-def parse_html(html, modal, redirect, update, show_modal):
-    '''Parse the rendered template.
+class ModalParser(HTMLParser):
+    '''Parse the output of `render_template` to get the modal body.'''
 
-    Add ids to the modal bodies. If modal body contains a form, set
-    `data-turbo="true"` attribute on the form.
+    def __init__(self, html, modal):
+        '''Initialize the parser.
 
-    If rendering a template by setting the `redirect` argument to
-    `False`, set an id on the body element for the update operation.
-    Turbo requires a redirect on form submission, so we cannot normally
-    render a template (unless streaming). To overcome this and refresh
-    the page, we stream an update operation on the body element.
+        Parameters:
+        html - The html document string
+        modal - The id of the modal
+        '''
 
-    If streaming, return the html fragment (either the modal body or the
-    body element itself).
-    '''
-    soup = BeautifulSoup(html, 'html.parser')
+        super().__init__()
+        self.html = html
+        self.modal = modal
+        self.stream = ''
+        self.found_modal = False
+        self.found_body = False
+        self.div_count = 0
 
-    modal_bodies = soup.find_all('div', class_='modal-body')
+    def handle_starttag(self, tag, attrs):
 
-    for index, body in enumerate(modal_bodies, 1):
-        body['id'] = f'turbo-stream__{index}'
-        form = body.find('form')
-        if form:
-            form['data-turbo'] = 'true'
+        if tag == 'div':
+            if self.found_modal:
+                if self.found_body:
+                    self.div_count += 1
+                else:
+                    for attr in attrs:
+                        if attr[0] == 'class' and 'modal-body' in attr[1]:
+                            self.found_body = True
+                            self.div_count += 1
+                            self.stream_start = self.getpos()
+            else:
+                for attr in attrs:
+                    if attr[0] == 'id' and attr[1] == self.modal:
+                        self.found_modal = True
 
-    if not redirect:
-        soup.body['id'] = 'turbo-stream__body'
+    def handle_endtag(self, tag):
 
-    stream = ''
-    target = ''
-    output = ''
+        if tag == 'div':
+            if self.found_body:
+                self.div_count -= 1
+                if self.div_count == 0:
+                    self.stream_end = self.getpos()
+                    self.get_stream()
+                    self.found_modal = False
+                    self.found_body = False
 
-    if update or show_modal:
-        if update:
-            stream = soup.body.decode_contents(formatter='html')
-            target = soup.body['id']
-        else:
-            target_modal = soup.find('div', id=modal)
-            modal_body = target_modal.find('div', class_='modal-body')
-            stream = modal_body.decode(formatter='html')
-            target = modal_body['id']
-    else:
-        # Turbo merges the changes to the head. If asset html is not
-        # identical, it gets repeated. So instead of decoding the
-        # entire document, we decode the body and add the head part
-        # from the html string.
-        body = soup.body.decode(formatter='html')
-        pos = html.index('</head>') + 7
-        head = html[:pos]
-        output = head + body + '</html>'
+    def get_stream(self):
+        '''Get the modal body element.'''
 
-    return output, stream, target
+        lines = self.html.splitlines(keepends=True)
+        start_line_no = self.stream_start[0] - 1
+        start_line = lines[start_line_no]
+        start_pos = self.stream_start[1]
+        end_line_no = self.stream_end[0] - 1
+        end_line = lines[end_line_no]
+        end_pos = self.stream_end[1] + 6  # len('</div>') = 6
+        self.stream += start_line[start_pos:]
+        for line in lines[start_line_no + 1:end_line_no]:
+            self.stream += line
+        self.stream += end_line[:end_pos]

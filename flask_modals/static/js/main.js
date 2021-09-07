@@ -1,43 +1,107 @@
-// The .modal-backdrop div appears mutliple times when the form is 
-// submitted via ajax and the response is a redirect to the same page.
-// This happens in Bootstrap 4. We need to keep only one occurrence.
-function removeBackdrop() {
-  const els = document.querySelectorAll('.modal-backdrop')
-  for (let i=0; i < els.length - 1; i++) {
-    els[i].remove()
+(function () {
+  const formEls = document.querySelectorAll('form')
+
+  formEls.forEach(el => {
+    const modalBodyEl = el.closest('.modal-body')
+    if (modalBodyEl) {
+      el.addEventListener('submit', e => {
+        e.preventDefault()
+        fetchData(el, modalBodyEl)
+      })
+    }
+  })
+
+  function fetchData(el, modalBodyEl) {
+    let url
+    NProgress.start()
+    fetch(el.action, {
+      method: el.method,
+      body: new FormData(el),
+      headers: {
+        Accept: 'text/modal-stream.html'
+      }
+    })
+      .then(res => {
+        if (res.ok) {
+          NProgress.done()
+          url = res.url
+          return res.text()
+        } else {
+          throw new Error(`Error fetching data. Status ${res.status}`)
+        }
+      })
+      .then(data => {
+        if (data.startsWith('<template>')) {
+          const doc = new DOMParser().parseFromString(data, "text/html")
+          const templateEl = doc.querySelector('template')
+          const newModalBodyEl = doc.importNode(templateEl.content, true)
+            .firstElementChild
+          modalBodyEl.innerHTML = newModalBodyEl.innerHTML
+          const el = modalBodyEl.querySelector('form')
+          el.addEventListener('submit', e => {
+            e.preventDefault()
+            fetchData(el, modalBodyEl)
+          })
+        } else {
+          if (location.href !== url) {
+            history.replaceState({ modal: true }, '')
+            history.pushState(null, '', url)
+          }
+          const doc = new DOMParser().parseFromString(data, "text/html")
+          document.documentElement.replaceWith(doc.documentElement)
+          activateScripts()
+          removeExtraBackdrops()
+        }
+      })
+      .catch(err => {
+        NProgress.done()
+        console.log(err)
+      })
   }
-}
 
-document.documentElement.addEventListener('turbo:render', () => {
-  if (window.jQuery) {
-    $('.modal').unbind('shown.bs.modal')
-    $('.modal').on('shown.bs.modal', removeBackdrop)
+  // Need to activate inert scripts in new document.
+  function activateScripts() {
+    const scriptEls = document.querySelectorAll('script')
+
+    scriptEls.forEach(el => {
+      const newScriptEl = document.createElement('script')
+      newScriptEl.textContent = el.textContent
+      newScriptEl.async = false
+      for (const { name, value } of [...el.attributes]) {
+        newScriptEl.setAttribute(name, value)
+      }
+      el.replaceWith(newScriptEl)
+    })
+
   }
-})
 
-document.documentElement.addEventListener('turbo:submit-start', () => {
-  NProgress.start()
-})
-
-document.documentElement.addEventListener('turbo:submit-end', () => {
-  NProgress.done()
-})
-
-document.documentElement.addEventListener('turbo:before-stream-render', (e) => {
-  if (e.target.attributes.action.value === 'update') {
-    const body = document.querySelector('body')
-    body.classList.remove('modal-open')
+  // The .modal-backdrop div gets repeated on ajax load of the same
+  // modal page.
+  function removeExtraBackdrops() {
     if (window.jQuery) {
-      // Needed for bootstrap 4
-      body.style.paddingRight = '0px'
+      // remove possible duplicate
+      $('.modal').unbind('shown.bs.modal')
+      $('.modal').on('shown.bs.modal', removeBackdrop)
     } else {
-      body.removeAttribute('data-bs-overflow')
-      body.removeAttribute('data-bs-padding-right')
-      body.removeAttribute('style')
+      const modals = document.querySelectorAll('.modal')
+      modals.forEach(m => {
+        // remove possible duplicate
+        m.removeEventListener('shown.bs.modal', removeBackdrop)
+        m.addEventListener('shown.bs.modal', removeBackdrop)
+      })
     }
   }
-})
 
-document.documentElement.addEventListener('turbo:load', () => {
-  document.body.dataset.turbo = false
-})
+  function removeBackdrop() {
+    const els = document.querySelectorAll('.modal-backdrop')
+    for (let i = 0; i < els.length - 1; i++) {
+      els[i].remove()
+    }
+  }
+
+  window.onpopstate = function (e) {
+    if (typeof e.state === 'object' && e.state !== null && 'modal' in e.state) {
+      location.reload()
+    }
+  }
+})()

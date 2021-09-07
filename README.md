@@ -9,9 +9,9 @@ JavaScript. Normal form submission in modals has its own problems.
 
 This Flask extension eases the process of using forms in Bootstrap modals.
 Bootstrap versions 4 and 5 are supported. No JavaScript coding is required on 
-your part. The ajax calls are handled behind the scenes with html-over-the-wire
-[Turbo](https://turbo.hotwire.dev/) library. You can code in pure Python -
-flashing messages and rendering templates.
+your part. The JavaScript is handled behind the scenes and uses
+html-over-the-wire. You can code in pure Python - flashing messages and rendering
+templates.
 
 ### Installation
 
@@ -62,9 +62,7 @@ pip install Flask-Modals
 
 You only need to import the function `render_template_modal` in your `routes.py`
 file. Use it instead of `render_template` in the route handler for the page with
-the modal form. It takes as arguments `modal` (the modal `id`), and optionally
-`turbo` and `redirect` (discussed next), in addition to the arguments passed to
-`render_template`.
+the modal form. It takes an extra argument - `modal` (the modal `id`).
 
 Example route handler:
 
@@ -74,11 +72,11 @@ from flask_modals import render_template_modal
 @app.route('/', methods=['GET', 'POST'])
 def index():
 
+    # Following code is standard in any application
     form = LoginForm()
     if form.validate_on_submit():
         if form.username.data != 'test' or form.password.data != 'pass':
             flash('Invalid username or password', 'danger')
-            # You can use `render_template_modal` here
             return redirect(url_for('index'))
 
         login_user(user, remember=form.remember_me.data)
@@ -86,19 +84,20 @@ def index():
         flash('You have logged in!', 'success')
         return redirect(url_for('home'))
 
+    # Following line is new
     return render_template_modal('index.html', form=form, modal='modal-form')
 ```
 
 ### Other usage
 
 1. If you want to redirect to the same page outside the modal, use Flask's
-`session` proxy and the `turbo` argument as follows:
+`session` proxy:
 
     ```Python
     @app.route('/', methods=['GET', 'POST'])
     def index():
 
-        flag = session.pop('flag', True)
+        flag = session.pop('flag', False)
 
         form = LoginForm()
         if form.validate_on_submit():
@@ -109,15 +108,14 @@ def index():
             login_user(user, remember=form.remember_me.data)
 
             flash('You have logged in!', 'success')
-            session['flag'] = False
+            session['flag'] = True
             return redirect(url_for('index'))
 
-        return render_template_modal('index.html', form=form,
-                                    modal='modal-form', turbo=flag)
+        modal = None if flag else 'modal-form' 
+        return render_template_modal('index.html', form=form, modal=modal)
     ```
     <br>
-2. If you want to render a template and not redirect, then use the `turbo` and
-`redirect` arguments as follows:
+2. If you want to render a template and not redirect:
 
     ```Python
     @app.route('/', methods=['GET', 'POST'])
@@ -127,17 +125,14 @@ def index():
         if form.validate_on_submit():
             if form.username.data != 'test' or form.password.data != 'pass':
                 flash('Invalid username or password', 'danger')
-                return render_template_modal('index.html', form=form,
-                                            modal='modal-form', redirect=False)
+                return render_template_modal('index.html', form=form, modal='modal-form')
 
             login_user(user, remember=form.remember_me.data)
 
             flash('You have logged in!', 'success')
-            return render_template_modal('index.html', form=form, turbo=False,
-                                        modal='modal-form', redirect=False)
+            return render_template_modal('index.html', form=form, modal=None)
 
-        return render_template_modal('index.html', form=form,
-                                    modal='modal-form', redirect=False)
+        return render_template_modal('index.html', form=form, modal='modal-form')
     ```
     If the above looks verbose, you can use the `response` decorator and
     return a context dictionary, like so:
@@ -150,13 +145,9 @@ def index():
     def index():
         ...
         ...
-        return {'form': form, 'modal': 'modal-form', 'redirect': False}
+        return {'form': form, 'modal': 'modal-form'}
     ```
     <br>
-3. If you want to reload the page on form submit (for example, to refresh the
-`head` tag), you can use `redirect_to` function in the modal route and
-`render_template_redirect` function in the target route. They take in the same
-arguments as Flask's `redirect` and `render_template` functions respectively.
 
 ### Note
 
@@ -164,3 +155,6 @@ arguments as Flask's `redirect` and `render_template` functions respectively.
 
 2. The extension loads the NProgress js library to display a progress bar during
 form submission.  
+
+3. If you have custom javascript which has global constants, you need to wrap it
+in an IIFE. Otherwise, there could be redeclaration errors.
