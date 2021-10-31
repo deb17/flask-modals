@@ -3,7 +3,7 @@ from functools import wraps
 from flask import (Blueprint, render_template, get_flashed_messages,
                    _app_ctx_stack, request)
 from jinja2 import Markup
-from flask_modals.parser import ModalParser
+from flask_modals.partial import get_partial
 
 
 def modal_messages():
@@ -28,10 +28,8 @@ def render_template_modal(*args, **kwargs):
         # prevent flash messages from showing both outside and
         # inside the modal
         ctx._modal = True
-        html = render_template(*args, **kwargs)
-        parser = ModalParser(html, modal)
-        parser.feed(html)
-        return f'<template>{parser.stream}</template>'
+        partial = get_partial(modal, *args, **kwargs)
+        return f'<template>{partial}</template>'
     else:
         return render_template(*args, **kwargs)
 
@@ -39,12 +37,7 @@ def render_template_modal(*args, **kwargs):
 def can_stream():
     '''Returns `True` if the client accepts streams.'''
 
-    stream_mimetype = 'text/modal-stream.html'
-    if stream_mimetype not in request.accept_mimetypes.values():
-        return False
-    best = request.accept_mimetypes.best_match([
-        stream_mimetype, 'text/html'])
-    return best == stream_mimetype
+    return 'text/modal-stream.html' in request.accept_mimetypes.values()
 
 
 def response(template=None):
@@ -107,7 +100,7 @@ class Modal:
 
         return get_flashed_messages(*args, **kwargs)
 
-    def load(self, url=None):
+    def load(self):
         '''Load the following markup:
 
         1. nprogress.html - NProgress js library for progress bar

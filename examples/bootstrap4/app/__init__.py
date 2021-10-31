@@ -8,7 +8,7 @@ app.config['SECRET_KEY'] = 'super-secret-key'
 
 bootstrap = Bootstrap(app)
 login = LoginManager(app)
-login.login_view = 'login'
+login.login_view = 'index'
 modal = Modal(app)
 
 

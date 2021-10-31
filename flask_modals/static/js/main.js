@@ -6,17 +6,23 @@
     if (modalBodyEl) {
       el.addEventListener('submit', e => {
         e.preventDefault()
-        fetchData(el, modalBodyEl)
+        fetchData(el, modalBodyEl, e.submitter)
       })
     }
   })
 
-  function fetchData(el, modalBodyEl) {
+  function fetchData(el, modalBodyEl, submitter) {
     let url
+    const body = new FormData(el)
+    if (submitter) {
+      const name = submitter.getAttribute('name')
+      const value = submitter.getAttribute('value')
+      body.append(name, value)
+    }
     NProgress.start()
     fetch(el.action, {
       method: el.method,
-      body: new FormData(el),
+      body: body,
       headers: {
         Accept: 'text/modal-stream.html'
       }
@@ -40,7 +46,7 @@
           const el = modalBodyEl.querySelector('form')
           el.addEventListener('submit', e => {
             e.preventDefault()
-            fetchData(el, modalBodyEl)
+            fetchData(el, modalBodyEl, e.submitter)
           })
         } else {
           if (location.href !== url) {
