@@ -25,19 +25,17 @@
 
 {% block scripts %}
 <script>
-  (function () {
-    const registerModal = new bootstrap.Modal(document.getElementById('register-modal'))
-    const loginModal = new bootstrap.Modal(document.getElementById('login-modal'))
-    const signinLink = document.getElementById('signin')
-    const signupLink = document.getElementById('signup')
-    signinLink.addEventListener('click', () => {
-      registerModal.hide()
-      loginModal.show()
-    })
-    signupLink.addEventListener('click', () => {
-      loginModal.hide()
-      registerModal.show()
-    })
-  })()
+  const registerModal = new bootstrap.Modal(document.getElementById('register-modal'))
+  const loginModal = new bootstrap.Modal(document.getElementById('login-modal'))
+  const signinLink = document.getElementById('signin')
+  const signupLink = document.getElementById('signup')
+  signinLink.addEventListener('click', () => {
+    registerModal.hide()
+    loginModal.show()
+  })
+  signupLink.addEventListener('click', () => {
+    loginModal.hide()
+    registerModal.show()
+  })
 </script>
 {% endblock %}

@@ -17,14 +17,15 @@ def index():
 def auth():
     '''This page has 2 modal forms. (For a simpler example, see the
     bootstrap 4 example.) Call `render_template_modal` instead of
-    `render_template`. It takes the modal id as an argument apart from
-    the arguments passed to `render_template`.
+    `render_template`. It takes the modal id (default 'modal-form')
+    as an argument apart from the arguments passed to `render_template`.
     '''
 
     form1 = RegistrationForm()
     form2 = LoginForm()
     modal = session.pop('modal', None)
 
+    ajax = '_ajax' in request.form
     form = ''
     if 'password2' in request.form:
         form = 'form1'
@@ -34,7 +35,10 @@ def auth():
         modal = 'login-modal'
 
     if form == 'form1' and form1.validate_on_submit():
-        if register(form1):
+        retval = register(form1, ajax)
+        if retval is None:
+            return ''
+        if retval:
             flash(
                 'You have registered successfully! Please login.',
                 'success'
@@ -46,9 +50,11 @@ def auth():
             return redirect(url_for('auth'))
 
     if form == 'form2' and form2.validate_on_submit():
-        if login(form2.username.data, form2.password.data):
+        retval = login(form2.username.data, form2.password.data, ajax)
+        if retval is None:
+            return ''
+        if retval:
             flash('You have logged in successfully!', 'success')
-            session['flag'] = True
             return redirect(url_for('subscribe'))
         else:
             flash('Invalid credentials.', 'danger')
@@ -61,11 +67,9 @@ def auth():
 
 @app.route('/subscribe', methods=['GET', 'POST'])
 def subscribe():
-    '''Example of one modal page redirecting to another modal page.
-    `flag` is not required if not redirecting from a modal page (auth).
-    '''
+    '''Example of one modal page redirecting to another modal page.'''
 
-    flag = session.pop('flag', False)
+    ajax = '_ajax' in request.form
     if 'id' not in session:
         flash('You need to be logged in to access the page.', 'info')
         return redirect(url_for('index'))
@@ -86,12 +90,12 @@ def subscribe():
                 flash('Email is invalid.', 'danger')
             else:
                 if name:
+                    if ajax:
+                        return ''
                     flash('You have been subscribed!', 'success')
                     return redirect(url_for('feedback'))
 
-    modal = None if flag else 'modal-form'
-    return render_template_modal('subscribe.html', modal=modal,
-                                 name=name, email=email)
+    return render_template_modal('subscribe.html', name=name, email=email)
 
 
 # Example of redirecting to the same page
@@ -99,7 +103,7 @@ def subscribe():
 # @app.route('/subscribe', methods=['GET', 'POST'])
 # def subscribe():
 
-#     flag = session.pop('flag', False)
+#     ajax = '_ajax' in request.form
 #     if 'id' not in session:
 #         flash('You need to be logged in to access the page.', 'info')
 #         return redirect(url_for('index'))
@@ -120,20 +124,19 @@ def subscribe():
 #                 flash('Email is invalid.', 'danger')
 #             else:
 #                 if name:
+#                     if ajax:
+#                         return ''
 #                     flash('You have been subscribed!', 'success')
-#                     session['flag'] = True
 #                     return redirect(url_for('subscribe'))
 
-#     modal = None if flag else 'modal-form'
-#     return render_template_modal('subscribe.html', modal=modal,
-#                                  name=name, email=email)
+#     return render_template_modal('subscribe.html', name=name, email=email)
 
 # Example of rendering a template instead of redirecting
 #
 # @app.route('/subscribe', methods=['GET', 'POST'])
 # def subscribe():
 
-#     modal = None
+#     ajax = '_ajax' in request.form
 #     if 'id' not in session:
 #         flash('You need to be logged in to access the page.', 'info')
 #         return redirect(url_for('index'))
@@ -154,15 +157,14 @@ def subscribe():
 #                 flash('Email is invalid.', 'danger')
 #             else:
 #                 if name:
+#                     if ajax:
+#                         return ''
 #                     flash('You have been subscribed!', 'success')
 #                     return render_template_modal(
-#                         'subscribe.html', modal=None,
-#                         name=name, email=email
+#                         'subscribe.html', name=name, email=email
 #                     )
-#         modal = 'modal-form'
 
-#     return render_template_modal('subscribe.html', modal=modal,
-#                                  name=name, email=email)
+#     return render_template_modal('subscribe.html', name=name, email=email)
 
 # Example of rendering a template instead of redirecting - less verbose.
 #
@@ -170,7 +172,7 @@ def subscribe():
 # @response('subscribe.html')
 # def subscribe():
 
-#     modal = None
+#     ajax = '_ajax' in request.form
 #     if 'id' not in session:
 #         flash('You need to be logged in to access the page.', 'info')
 #         return redirect(url_for('index'))
@@ -191,11 +193,12 @@ def subscribe():
 #                 flash('Email is invalid.', 'danger')
 #             else:
 #                 if name:
+#                     if ajax:
+#                         return ''
 #                     flash('You have been subscribed!', 'success')
-#                     return {'modal': None, 'name': name, 'email': email}
-#         modal = 'modal-form'
+#                     return {'name': name, 'email': email}
 
-#     return {'modal': modal, 'name': name, 'email': email}
+#     return {'name': name, 'email': email}
 
 
 @app.route('/feedback', methods=['GET', 'POST'])

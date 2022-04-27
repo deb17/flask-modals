@@ -14,11 +14,14 @@
   function fetchData(el, modalBodyEl, submitter) {
     let url
     const body = new FormData(el)
+    let submitterName, submitterValue
     if (submitter) {
-      const name = submitter.getAttribute('name')
-      const value = submitter.getAttribute('value')
-      body.append(name, value)
+      submitterName = submitter.getAttribute('name') || 'form-submit'
+      if (submitterName === 'submit') submitterName = 'form-submit'
+      submitterValue = submitter.getAttribute('value') || submitter.textContent
+      body.append(submitterName, submitterValue)
     }
+    body.append('_ajax', true)
     NProgress.start()
     fetch(el.action, {
       method: el.method,
@@ -37,7 +40,7 @@
         }
       })
       .then(data => {
-        if (data.startsWith('<template>')) {
+        if (data) {
           const doc = new DOMParser().parseFromString(data, "text/html")
           const templateEl = doc.querySelector('template')
           const newModalBodyEl = doc.importNode(templateEl.content, true)
@@ -49,65 +52,24 @@
             fetchData(el, modalBodyEl, e.submitter)
           })
         } else {
-          if (location.href !== url) {
-            history.replaceState({ modal: true }, '')
-            history.pushState(null, '', url)
+          const btn = el.querySelector('#submit, [name="submit"]')
+          if (btn) {
+            btn.removeAttribute('id')
+            btn.removeAttribute('name')
           }
-          const doc = new DOMParser().parseFromString(data, "text/html")
-          document.documentElement.replaceWith(doc.documentElement)
-          activateScripts()
-          removeExtraBackdrops()
+          if (submitter) {
+            const inp = document.createElement('input')
+            inp.type = 'hidden'
+            inp.name = submitterName
+            inp.value = submitterValue
+            el.appendChild(inp)
+          }
+          el.submit()
         }
       })
       .catch(err => {
         NProgress.done()
         console.log(err)
       })
-  }
-
-  // Need to activate inert scripts in new document.
-  function activateScripts() {
-    const scriptEls = document.querySelectorAll('script')
-
-    scriptEls.forEach(el => {
-      const newScriptEl = document.createElement('script')
-      newScriptEl.textContent = el.textContent
-      newScriptEl.async = false
-      for (const { name, value } of [...el.attributes]) {
-        newScriptEl.setAttribute(name, value)
-      }
-      el.replaceWith(newScriptEl)
-    })
-
-  }
-
-  // The .modal-backdrop div gets repeated on ajax load of the same
-  // modal page.
-  function removeExtraBackdrops() {
-    if (window.jQuery) {
-      // remove possible duplicate
-      $('.modal').unbind('shown.bs.modal')
-      $('.modal').on('shown.bs.modal', removeBackdrop)
-    } else {
-      const modals = document.querySelectorAll('.modal')
-      modals.forEach(m => {
-        // remove possible duplicate
-        m.removeEventListener('shown.bs.modal', removeBackdrop)
-        m.addEventListener('shown.bs.modal', removeBackdrop)
-      })
-    }
-  }
-
-  function removeBackdrop() {
-    const els = document.querySelectorAll('.modal-backdrop')
-    for (let i = 0; i < els.length - 1; i++) {
-      els[i].remove()
-    }
-  }
-
-  window.onpopstate = function (e) {
-    if (typeof e.state === 'object' && e.state !== null && 'modal' in e.state) {
-      location.reload()
-    }
   }
 })()
