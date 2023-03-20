@@ -110,6 +110,6 @@ class Modal:
         nprogress_html = render_template('modals/nprogress.html')
         main_html = render_template('modals/jstemplate.html')
 
-        html = Markup(nprogress_html + main_html)
+        html = markupsafe.Markup(nprogress_html + main_html)
 
         return html
