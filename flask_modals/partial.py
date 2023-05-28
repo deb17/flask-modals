@@ -9,7 +9,7 @@ def get_partial(modal_id, *args, **kwargs):
     root_node = html.fromstring(doc)
     xpath = f'//div[@id="{modal_id}"]'      # modal window
     modal_node = root_node.xpath(xpath)[0]
-    xpath = '//div[@class="modal-body"]'    # modal body
+    xpath = './/div[@class="modal-body"]'    # modal body
     body_node = modal_node.xpath(xpath)[0]
     body = str(etree.tostring(body_node)).replace('\\n', '').replace('\n', '')
     return body
