@@ -17,7 +17,7 @@ setuptools.setup(
                                    'static/js/main.js',
                                    'static/css/progressBarStyle.css']},
     include_package_data=True,
-    install_requires=['Flask'],
+    install_requires=['Flask', 'lxml'],
     zip_safe=False,
     classifiers=[
         'Development Status :: 3 - Alpha',

@@ -1,6 +1,6 @@
 Flask
 Flask-Modals
-Bootstrap-Flask==1.5.2
-Flask-Login==0.5.0
-Flask-WTF==0.14.3
-email-validator==1.1.2
+Bootstrap-Flask
+Flask-Login
+Flask-WTF
+email-validator
